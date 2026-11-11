@@ -1,6 +1,6 @@
 
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
-let media=[],selectedIndex=0,currentStyle="cinematic",currentRatio="9:16",deferredInstall=null,scenes=[],isExporting=false,cutoutImage=null,cutoutUrl="";
+let media=[],selectedIndex=0,currentStyle="noir",currentRatio="9:16",deferredInstall=null,scenes=[],isExporting=false,cutoutImage=null,cutoutUrl="";
 const input=$("#mediaInput"),list=$("#mediaList"),preview=$("#previewScreen");
 const toast=msg=>{const el=$("#toast");el.textContent=msg;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),3000)};
 const fmt=n=>n<1048576?Math.max(1,Math.round(n/1024))+" KB":(n/1048576).toFixed(1)+" MB";
@@ -27,8 +27,8 @@ function detectMediaType(file){
 }
 function addFiles(files){
  const valid=files.map(file=>({file,type:detectMediaType(file)})).filter(x=>x.type);
- if(!valid.length)return toast("فرمت عکس یا ویدیو شناسایی نشد؛ JPG، PNG، HEIC یا MP4 انتخاب کن.");
- valid.forEach(({file,type})=>media.push({file,url:URL.createObjectURL(file),type}));
+ if(!valid.length)return toast("برای جای‌گذاری محصول، فقط PNG انتخاب کن.");
+ media.forEach(m=>URL.revokeObjectURL(m.url));media=[];valid.forEach(({file,type})=>media.push({file,url:URL.createObjectURL(file),type}));
  renderMedia();selectMedia(media.length-1);
  $("#mediaStatus").textContent=media.length+" فایل اضافه شد";
  input.value="";
@@ -90,7 +90,14 @@ $("#playPreview").onclick=()=>{
  if($("#previewLabel").textContent==="پیش‌نمایش سناریوی کامل"){previewRunId++;$("#playPreview").textContent="▶";$("#previewLabel").textContent="پیش‌نمایش متوقف شد";return}
  playStoryboardPreview()
 };
-$$(".style-option").forEach(b=>b.onclick=()=>{$$(".style-option").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");currentStyle=b.dataset.style});
+$(".style-option").forEach(b=>b.onclick=()=>{$(".style-option").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");currentStyle=b.dataset.style});
+$(".template-card").forEach(card=>card.onclick=()=>{
+ $(".template-card").forEach(x=>x.classList.remove("selected"));
+ card.classList.add("selected");
+ currentStyle=card.dataset.template;
+ $("#quickStatus").textContent="قالب "+card.querySelector("strong").textContent+" انتخاب شد؛ حالا PNG کتونی را وارد کن.";
+ if(media.length)prepareQuickVideo(selectedIndex);
+});
 $$("[data-ratio]").forEach(b=>b.onclick=()=>{$$("[data-ratio]").forEach(x=>x.classList.remove("active"));b.classList.add("active");currentRatio=b.dataset.ratio;preview.style.aspectRatio=currentRatio.replace(":"," / ")});
 function buildScenes(){
  if(!media.length)return toast("اول رسانه اضافه کن.");
@@ -102,21 +109,21 @@ function buildScenes(){
    ["حرکت شناور","تعلیق کنترل‌شده با چرخش نرم",2.2,"float"],
    ["امضای ریبار","پایان مینیمال و قدرتمند",1.8,"outro"]
   ],
-  dynamic:[
+  chrome:[
    ["ورود ضربه‌ای","فرود سریع با برگشت کنترل‌شده",1.4,"impact"],
    ["چرخش نمایشی","چرخش مایل محصول",2,"spin"],
    ["کات جزئیات","نمای نزدیک با حرکت سریع",1.6,"detail"],
    ["حرکت Whip","جابجایی سریع دوربین",1.4,"whip"],
    ["فریم پایانی","قفل شدن محصول در قاب",1.6,"outro"]
   ],
-  editorial:[
+  redline:[
    ["افتتاحیه ادیتوریال","ترکیب‌بندی خلوت و حرکت ظریف",2.8,"float"],
    ["نمای سه‌ربع","چرخش مایل بسیار کنترل‌شده",2.6,"orbit"],
    ["جزئیات طراحی","حرکت ماکرو روی متریال",2.4,"macro"],
    ["فریم کمپین","حرکت آرام و فضای تنفس",2.4,"hero"],
    ["امضای برند","پایان تمیز و مینیمال",2,"outro"]
   ],
-  studio:[
+  editorial:[
    ["نمای قهرمان محصول","نمایش کامل فرم کتونی",2.5,"hero"],
    ["چرخش استودیویی","چرخش نرم با تغییر پرسپکتیو",3,"spin"],
    ["جزئیات نزدیک","تمرکز روی دوخت و متریال",2.5,"detail"],
@@ -124,7 +131,22 @@ function buildScenes(){
    ["پایان محصول","قاب نهایی محصول",1.8,"outro"]
   ]
  };
- const chosen=templates[currentStyle]||templates.cinematic;
+  concrete:[
+   ["اتاق متریال","ورود محصول از دل بافت صنعتی",2.4,"hero"],
+   ["اسکن فرم","حرکت دقیق روی سیلوئت کتونی",2.5,"slide"],
+   ["جزئیات ساخت","کلوزآپ کنترل‌شده متریال",2.3,"macro"],
+   ["نور لبه‌ای","چرخش نرم زیر نور استودیو",2.4,"orbit"],
+   ["فریم نهایی","قفل محصول و امضای ریبار",1.8,"outro"]
+  ],
+  orbit:[
+   ["ورود به مدار","ورود معلق با نور حلقه‌ای",2.2,"float"],
+   ["مدار اول","حرکت قوسی دور محصول",2.8,"orbit"],
+   ["نمای نزدیک","جزئیات در حرکت دوربین",2.1,"detail"],
+   ["چرخش کامل","چرخش نمایشی و نرم",2.5,"spin"],
+   ["پایان کمپین","قاب نهایی محصول",1.8,"outro"]
+  ]
+ };
+ const chosen=templates[currentStyle]||templates.noir;
  scenes=chosen.map((s,i)=>({title:s[0],desc:s[1],duration:s[2],shot:s[3],mediaIndex:selectedIndex}));
  renderScenes();renderStory();toast("سناریوی حرفه‌ای "+chosen.length+" صحنه‌ای ساخته شد.")
 }
