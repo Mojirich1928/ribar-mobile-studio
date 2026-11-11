@@ -36,6 +36,11 @@ function addFiles(files){
 async function prepareQuickVideo(index){
  const item=media[index];if(!item||item.type!=="image")return;
  selectedIndex=index;cutoutImage=null;
+ $(".template-art").forEach(art=>{
+  let shoe=$(".template-product",art);
+  if(!shoe){shoe=document.createElement("img");shoe.className="template-product";shoe.alt="پیش‌نمایش کتونی";art.append(shoe)}
+  shoe.src=item.url;
+ });
  $("#quickStatus").textContent="در حال آماده‌سازی عکس و سناریوی تبلیغاتی…";
  const isPng=(item.file.name||"").toLowerCase().endsWith(".png")||item.file.type==="image/png";
  if(isPng){
