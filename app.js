@@ -1,12 +1,22 @@
 
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
-let media=[],selectedIndex=0,currentStyle="cinematic",currentRatio="9:16",deferredInstall=null,scenes=[],isExporting=false;
+let media=[],selectedIndex=0,currentStyle="cinematic",currentRatio="9:16",deferredInstall=null,scenes=[],isExporting=false,cutoutImage=null,cutoutUrl="";
 const input=$("#mediaInput"),list=$("#mediaList"),preview=$("#previewScreen");
 const toast=msg=>{const el=$("#toast");el.textContent=msg;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),3000)};
 const fmt=n=>n<1048576?Math.max(1,Math.round(n/1024))+" KB":(n/1048576).toFixed(1)+" MB";
 $("#chooseMedia").onclick=()=>input.click();
 $("#dropZone").onclick=e=>{if(e.target.id==="dropZone"||e.target.closest(".upload-symbol,strong,small"))input.click()};
 input.onchange=e=>addFiles([...e.target.files]);
+const cutoutInput=$("#cutoutInput");
+$("#chooseCutout").onclick=()=>cutoutInput.click();
+cutoutInput.onchange=async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ if(file.type!=="image/png"&&!file.name.toLowerCase().endsWith(".png")){toast("برای لایه عمق، فایل PNG شفاف انتخاب کن.");cutoutInput.value="";return}
+ const url=URL.createObjectURL(file);
+ try{const img=await loadImage(url);if(cutoutUrl)URL.revokeObjectURL(cutoutUrl);cutoutUrl=url;cutoutImage=img;$("#cutoutStatus").textContent="لایه شفاف آماده است";toast("لایه سوژه برای حرکت عمقی آماده شد.");}
+ catch(err){URL.revokeObjectURL(url);toast("خواندن فایل PNG ممکن نشد.")}
+ cutoutInput.value="";
+};
 function detectMediaType(file){
  const mime=(file.type||"").toLowerCase(),name=(file.name||"").toLowerCase();
  if(mime.startsWith("image/")||/\\.(jpe?g|png|webp|gif|heic|heif|avif|bmp|tiff?)$/.test(name))return "image";
@@ -128,17 +138,30 @@ function drawScene(ctx,source,w,h,p,scene={}){
  if(!sw||!sh)throw Error("Media not ready");
  const shot=scene.shot||"hero",ease=p*p*(3-2*p);
  let zoom=1.06,moveX=0,moveY=0;
- if(shot==="hero"){zoom=1.18-.10*ease;moveX=(.5-p)*w*.045;moveY=(.5-p)*h*.018}
- if(shot==="detail"){zoom=1.48+.08*Math.sin(p*Math.PI);moveX=(p-.5)*w*.10;moveY=-h*.035}
- if(shot==="slide"){zoom=1.12;moveX=(.5-p)*w*.16;moveY=Math.sin(p*Math.PI)*h*.012}
- if(shot==="impact"){zoom=p<.18?1.10+(1-p/.18)*.12:1.10-.08*ease;moveY=(.5-p)*h*.035}
- if(shot==="outro"){zoom=1.10-.07*ease;moveY=(.5-p)*h*.015}
+ if(shot==="hero"){zoom=1.12-.07*ease;moveX=(.5-p)*w*.035;moveY=(.5-p)*h*.014}
+ if(shot==="detail"){zoom=1.34+.045*Math.sin(p*Math.PI);moveX=(p-.5)*w*.07;moveY=-h*.025}
+ if(shot==="slide"){zoom=1.09;moveX=(.5-p)*w*.12;moveY=Math.sin(p*Math.PI)*h*.01}
+ if(shot==="impact"){zoom=p<.18?1.08+(1-p/.18)*.10:1.08-.06*ease;moveY=(.5-p)*h*.025}
+ if(shot==="outro"){zoom=1.08-.055*ease;moveY=(.5-p)*h*.012}
  const scale=Math.max(w/sw,h/sh)*zoom,dw=sw*scale,dh=sh*scale;
- ctx.save();ctx.fillStyle="#070707";ctx.fillRect(0,0,w,h);
- ctx.drawImage(source,(w-dw)/2+moveX,(h-dh)/2+moveY,dw,dh);
- const shade=ctx.createLinearGradient(0,0,0,h);shade.addColorStop(0,"rgba(0,0,0,.12)");shade.addColorStop(.52,"rgba(0,0,0,0)");shade.addColorStop(1,"rgba(0,0,0,.78)");ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);
+ ctx.save();ctx.fillStyle="#080808";ctx.fillRect(0,0,w,h);
+ if(cutoutImage){
+  ctx.save();ctx.filter="blur(24px) brightness(.42) saturate(.72)";
+  const bgScale=Math.max(w/sw,h/sh)*1.13,bw=sw*bgScale,bh=sh*bgScale;
+  ctx.drawImage(source,(w-bw)/2,(h-bh)/2,bw,bh);ctx.restore();
+  const atmosphere=ctx.createLinearGradient(0,0,w,h);
+  atmosphere.addColorStop(0,"rgba(7,7,9,.20)");atmosphere.addColorStop(.55,"rgba(8,8,10,.55)");atmosphere.addColorStop(1,"rgba(0,0,0,.88)");
+  ctx.fillStyle=atmosphere;ctx.fillRect(0,0,w,h);
+  const iw=cutoutImage.naturalWidth,ih=cutoutImage.naturalHeight;
+  const fit=Math.min(w*.82/iw,h*.60/ih),subjectScale=fit*(shot==="detail"?1.12:shot==="impact"?1.04:1);
+  const fw=iw*subjectScale,fh=ih*subjectScale,depthX=(.5-p)*w*(shot==="slide"?.065:.025),depthY=Math.sin(p*Math.PI)*h*.012;
+  const subjectY=h*.43+depthY+(shot==="detail"?h*.025:0);
+  ctx.save();ctx.globalAlpha=.48;ctx.filter="blur(20px)";ctx.fillStyle="#000";ctx.beginPath();ctx.ellipse(w*.5+depthX,h*.77,fw*.34,Math.max(10,fh*.055),-.04,0,Math.PI*2);ctx.fill();ctx.restore();
+  ctx.save();ctx.shadowColor="rgba(0,0,0,.62)";ctx.shadowBlur=34;ctx.shadowOffsetY=18;ctx.drawImage(cutoutImage,(w-fw)/2+depthX,subjectY-fh/2,fw,fh);ctx.restore();
+ }else{ctx.drawImage(source,(w-dw)/2+moveX,(h-dh)/2+moveY,dw,dh)}
+ const shade=ctx.createLinearGradient(0,0,0,h);shade.addColorStop(0,"rgba(0,0,0,.10)");shade.addColorStop(.52,"rgba(0,0,0,0)");shade.addColorStop(1,"rgba(0,0,0,.78)");ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);
  const vignette=ctx.createRadialGradient(w*.5,h*.45,Math.min(w,h)*.2,w*.5,h*.45,Math.max(w,h)*.72);vignette.addColorStop(0,"rgba(0,0,0,0)");vignette.addColorStop(1,"rgba(0,0,0,.42)");ctx.fillStyle=vignette;ctx.fillRect(0,0,w,h);
- const lx=(p*1.55-.25)*w;const light=ctx.createLinearGradient(lx-w*.18,0,lx+w*.18,0);light.addColorStop(0,"rgba(255,255,255,0)");light.addColorStop(.5,"rgba(255,255,255,.10)");light.addColorStop(1,"rgba(255,255,255,0)");ctx.fillStyle=light;ctx.fillRect(0,0,w,h);
+ const lx=(p*1.35-.18)*w,light=ctx.createLinearGradient(lx-w*.16,0,lx+w*.16,0);light.addColorStop(0,"rgba(255,255,255,0)");light.addColorStop(.5,"rgba(255,255,255,.13)");light.addColorStop(1,"rgba(255,255,255,0)");ctx.fillStyle=light;ctx.fillRect(0,0,w,h);
  ctx.globalAlpha=Math.min(1,p*5);ctx.fillStyle="#e21b36";ctx.fillRect(w*.075,h*.075,w*.11,Math.max(3,h*.004));
  ctx.fillStyle="rgba(255,255,255,.78)";ctx.font="600 "+Math.round(w*.022)+"px Arial";ctx.textAlign="left";ctx.fillText("RIBAR COLLECTION",w*.075,h*.12);
  ctx.textAlign="center";ctx.fillStyle="#fff";ctx.font="800 "+Math.round(w*(shot==="outro"?.075:.052))+"px Arial";
