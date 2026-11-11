@@ -25,7 +25,16 @@
       <section class="welcome">
         <div class="eyebrow"><i></i> MOBILE CREATIVE SUITE</div>
         <h1>استودیوی ویدیویی<br><span>ریبار</span></h1>
-        <p>از عکس کتونی تا یک ویدیوی تبلیغاتی؛ در یک فضای حرفه‌ای و ساده.</p>
+        <p>یک PNG از کتونی انتخاب کن؛ ویدیوی تبلیغاتی آماده‌ات را تحویل بگیر.</p>
+      </section>
+
+      <section class="quick-start project-card">
+        <span class="step">QUICK VIDEO / ONE-CLICK WORKFLOW</span>
+        <h2>از PNG تا ویدیو</h2>
+        <p>عکس محصول را انتخاب کن. صحنه‌ها، حرکت‌ها و ترکیب‌بندی به‌صورت خودکار آماده می‌شوند.</p>
+        <button class="primary-btn full" id="quickChoose">＋ انتخاب PNG کتونی</button>
+        <div class="quick-status" id="quickStatus">منتظر عکس محصول هستیم</div>
+        <button class="advanced-toggle" id="advancedToggle" aria-expanded="false">تنظیمات پیشرفته و سناریوها <span>＋</span></button>
       </section>
 
       <section class="project-card">
@@ -49,7 +58,7 @@
         </div>
       </section>
 
-      <section class="project-card">
+      <section class="project-card advanced-panel" id="directionPanel">
         <div class="section-head">
           <div><span class="step">02 / DIRECTION</span><h2>جهت خلاقه</h2></div>
         </div>
@@ -67,7 +76,7 @@
         </div>
       </section>
 
-      <section class="project-card">
+      <section class="project-card advanced-panel" id="storyPanel">
         <div class="section-head">
           <div><span class="step">03 / STORYBOARD</span><h2>سناریوی ویدیو</h2></div>
           <button class="text-btn" id="buildStory">ساخت سناریو ↗</button>
@@ -77,7 +86,7 @@
         </div>
       </section>
 
-      <section class="project-card" id="timelineCard">
+      <section class="project-card advanced-panel" id="timelineCard">
         <div class="section-head"><div><span class="step">04 / EDIT TIMELINE</span><h2>تایم‌لاین تدوین</h2></div><span class="status" id="timelineStatus">۰ صحنه</span></div>
         <div class="timeline-tools"><button class="tool-chip" id="addScene">＋ افزودن صحنه</button><button class="tool-chip" id="resetScenes">بازسازی سناریو</button></div>
         <div class="timeline-list" id="timelineList"><div class="empty-state">رسانه اضافه کن و سناریو بساز.</div></div>
