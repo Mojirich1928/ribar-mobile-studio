@@ -70,28 +70,46 @@ $$(".style-option").forEach(b=>b.onclick=()=>{$$(".style-option").forEach(x=>x.c
 $$("[data-ratio]").forEach(b=>b.onclick=()=>{$$("[data-ratio]").forEach(x=>x.classList.remove("active"));b.classList.add("active");currentRatio=b.dataset.ratio;preview.style.aspectRatio=currentRatio.replace(":"," / ")});
 function buildScenes(){
  if(!media.length)return toast("اول رسانه اضافه کن.");
- const base=currentStyle==="cinematic"?[
-  {title:"ورود قهرمانانه",desc:"ورود آرام با شناوری و زاویه سینمایی",duration:2.5,shot:"hero"},
-  {title:"چرخش نمایشی محصول",desc:"حرکت قوسی و تغییر زاویه شبه‌سه‌بعدی",duration:3,shot:"orbit"},
-  {title:"نمای نزدیک جزئیات",desc:"حرکت ماکرو روی فرم و متریال",duration:2.5,shot:"detail"},
-  {title:"حرکت جانبی محصول",desc:"اسلاید نرم برای نمایش فرم کتونی",duration:2.5,shot:"slide"},
-  {title:"فریم نهایی برند",desc:"جمع‌بندی تمیز با امضای ریبار",duration:2,shot:"outro"}
- ]:[
-  {title:"شروع ضربه‌ای",desc:"فرود سریع و کنترل‌شده محصول",duration:1.5,shot:"impact"},
-  {title:"چرخش پرانرژی",desc:"چرخش مایل و حرکت قوسی دور محصول",duration:2.2,shot:"orbit"},
-  {title:"کلوزآپ پویا",desc:"کات نزدیک با حرکت سریع",duration:2,shot:"detail"},
-  {title:"اسلاید محصول",desc:"حرکت جانبی و تاکید روی فرم",duration:1.8,shot:"slide"},
-  {title:"پایان ریلز",desc:"فریم نهایی برند",duration:1.5,shot:"outro"}
- ];
- scenes=base.map((s,i)=>({...s,mediaIndex:Math.min(i,media.length-1)}));
- renderScenes();renderStory();toast("سناریوی چندبخشی ساخته شد؛ هر صحنه حرکت متفاوت دارد.")
+ const templates={
+  cinematic:[
+   ["ورود قهرمانانه","ورود آرام با نور و شناوری محصول",2.4,"hero"],
+   ["چرخش قوسی محصول","حرکت شبه‌سه‌بعدی دور کتونی",2.8,"orbit"],
+   ["نمای ماکرو متریال","تاکید روی بافت و ساختار",2.2,"macro"],
+   ["حرکت شناور","تعلیق کنترل‌شده با چرخش نرم",2.2,"float"],
+   ["امضای ریبار","پایان مینیمال و قدرتمند",1.8,"outro"]
+  ],
+  dynamic:[
+   ["ورود ضربه‌ای","فرود سریع با برگشت کنترل‌شده",1.4,"impact"],
+   ["چرخش نمایشی","چرخش مایل محصول",2,"spin"],
+   ["کات جزئیات","نمای نزدیک با حرکت سریع",1.6,"detail"],
+   ["حرکت Whip","جابجایی سریع دوربین",1.4,"whip"],
+   ["فریم پایانی","قفل شدن محصول در قاب",1.6,"outro"]
+  ],
+  editorial:[
+   ["افتتاحیه ادیتوریال","ترکیب‌بندی خلوت و حرکت ظریف",2.8,"float"],
+   ["نمای سه‌ربع","چرخش مایل بسیار کنترل‌شده",2.6,"orbit"],
+   ["جزئیات طراحی","حرکت ماکرو روی متریال",2.4,"macro"],
+   ["فریم کمپین","حرکت آرام و فضای تنفس",2.4,"hero"],
+   ["امضای برند","پایان تمیز و مینیمال",2,"outro"]
+  ],
+  studio:[
+   ["نمای قهرمان محصول","نمایش کامل فرم کتونی",2.5,"hero"],
+   ["چرخش استودیویی","چرخش نرم با تغییر پرسپکتیو",3,"spin"],
+   ["جزئیات نزدیک","تمرکز روی دوخت و متریال",2.5,"detail"],
+   ["اسلاید کناری","نمایش پروفایل کفش",2.3,"slide"],
+   ["پایان محصول","قاب نهایی محصول",1.8,"outro"]
+  ]
+ };
+ const chosen=templates[currentStyle]||templates.cinematic;
+ scenes=chosen.map((s,i)=>({title:s[0],desc:s[1],duration:s[2],shot:s[3],mediaIndex:Math.min(i,media.length-1)}));
+ renderScenes();renderStory();toast("سناریوی حرفه‌ای "+chosen.length+" صحنه‌ای ساخته شد.")
 }
 $("#buildStory").onclick=buildScenes;
 $("#resetScenes").onclick=()=>{if(!media.length)return toast("اول عکس یا ویدیو اضافه کن.");buildScenes()};
 $("#addScene").onclick=()=>{
  if(!media.length)return toast("اول عکس یا ویدیو اضافه کن.");
  const n=scenes.length;
- const shots=["hero","orbit","detail","slide","outro"];
+ const shots=["hero","orbit","spin","float","macro","whip","detail","slide","impact","outro"];
  const shot=shots[n%shots.length];
  scenes.push({title:"صحنه جدید",desc:"صحنه قابل ویرایش",duration:2,shot,mediaIndex:Math.min(selectedIndex,media.length-1)});
  renderScenes();renderStory();toast("صحنه جدید اضافه شد.");
@@ -107,7 +125,7 @@ function renderStory(){
   $(".scene-time",row).textContent=s.duration+" ثانیه";el.append(row)
  })
 }
-const SHOT_LABELS={hero:"ورود سینمایی",orbit:"چرخش شبه‌سه‌بعدی",detail:"کلوزآپ جزئیات",slide:"اسلاید جانبی",impact:"ورود ضربه‌ای",outro:"پایان برند"};
+const SHOT_LABELS={hero:"ورود سینمایی",orbit:"حرکت قوسی",spin:"چرخش مایل",float:"شناوری",macro:"ماکرو",whip:"حرکت سریع دوربین",detail:"کلوزآپ جزئیات",slide:"اسلاید جانبی",impact:"ورود ضربه‌ای",outro:"پایان برند"};
 function renderScenes(){
  const el=$("#timelineList");el.innerHTML="";$("#timelineStatus").textContent=scenes.length+" صحنه";
  if(!scenes.length){el.innerHTML='<div class="empty-state">صحنه‌ای وجود ندارد.</div>';return}
@@ -164,6 +182,10 @@ function drawScene(ctx,source,w,h,p,scene={}){
   if(shot==="hero"){roll=(-.055*(1-p))+.018*Math.sin(p*Math.PI*2);yaw=.94+.06*Math.sin(p*Math.PI);depthX+=(.5-p)*w*.035;verticalBob=Math.sin(p*Math.PI*2)*h*.008}
   if(shot==="orbit"){roll=Math.sin(p*Math.PI*2)*.105;yaw=.78+.22*Math.pow(Math.cos(p*Math.PI*2),2);depthX+=Math.sin(p*Math.PI*2)*w*.075;depthY+=Math.cos(p*Math.PI*2)*h*.018;verticalBob=Math.sin(p*Math.PI*2)*h*.018}
   if(shot==="detail"){roll=-.025+.05*p;yaw=.98+.035*Math.sin(p*Math.PI);depthX+=(p-.5)*w*.045;depthY-=h*.018}
+  if(shot==="macro"){roll=-.018+.036*p;yaw=.90+.10*Math.sin(p*Math.PI);depthX+=(p-.5)*w*.055;depthY-=h*.028}
+  if(shot==="spin"){roll=-.22+(.44*p);yaw=.72+.28*Math.abs(Math.cos(p*Math.PI));depthX+=Math.sin(p*Math.PI*2)*w*.045;depthY-=Math.sin(p*Math.PI)*h*.012}
+  if(shot==="float"){roll=Math.sin(p*Math.PI*2)*.035;yaw=.97+.03*Math.sin(p*Math.PI*2);depthX+=Math.sin(p*Math.PI*2)*w*.025;depthY+=Math.sin(p*Math.PI*2)*h*.025}
+  if(shot==="whip"){const whip=Math.sin(p*Math.PI);roll=(p<.5?-.18:.18)*(1-whip);yaw=.86+.14*whip;depthX+=(p<.5?1-p*2:(p-.5)*2)*w*.09;depthY-=whip*h*.025}
   if(shot==="slide"){roll=(p-.5)*.075;yaw=.96+.04*Math.sin(p*Math.PI);depthX+=(.5-p)*w*.105;verticalBob=Math.sin(p*Math.PI)*h*.012}
   if(shot==="impact"){const bounce=Math.sin(Math.min(1,p*2.8)*Math.PI)*(1-p*.5);roll=-.14*(1-Math.min(1,p*2.2));yaw=.88+.12*Math.min(1,p*2.4);depthY-=bounce*h*.045;depthX+=(p<.5?1-p*2:0)*w*.035}
   if(shot==="outro"){roll=-.025+Math.sin(p*Math.PI)*.025;yaw=.96+.04*settle;depthY-=Math.sin(p*Math.PI)*h*.008}
