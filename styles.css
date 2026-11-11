@@ -20,3 +20,13 @@
 .style-option b{font-size:11px;letter-spacing:.2px}
 .style-option small{line-height:1.7}
 @media(max-width:360px){.style-grid{grid-template-columns:1fr}.style-option{min-height:82px}}
+
+/* Quick PNG-to-video workflow */
+.quick-start{border-color:#4a2029;background:linear-gradient(145deg,#211317,#111)}
+.quick-start h2{font-size:19px;margin:8px 0 4px}
+.quick-start p{font-size:11px;color:#aaa;line-height:1.9;margin:0}
+.quick-status{font-size:10px;color:#ff8795;line-height:1.8;margin-top:10px;text-align:center}
+.advanced-toggle{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:14px;padding:12px 2px 0;background:none;border:0;border-top:1px solid #38252a;color:#bbb;font:inherit;font-size:10px}
+.advanced-toggle span{color:#ff7182;font-size:17px}
+.advanced-panel{display:none}
+.advanced-panel.show{display:block}
