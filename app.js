@@ -1,131 +1,27 @@
-"use strict";
-(()=>{
-const $=id=>document.getElementById(id);
-const fileInput=$("fileInput"),uploadButton=$("uploadButton"),previewCanvas=$("previewCanvas"),ctx=previewCanvas.getContext("2d");
-let productImage=null,productUrl="",file=null,rafId=0,previewRunning=false,rendering=false,downloadUrl="";
-let ratio="9:16",duration=8,quality=1080,previewStarted=0;
-const state={phase:"idle"};
-function setStatus(text){$("renderStatus").textContent=text}
-function aspect(){return ratio.split(":").map(Number)}
-function canvasSize(){const [rw,rh]=aspect();const w=quality;return {w,h:Math.round(w*rh/rw)}}
-function drawFrame(target,w,h,p){
- target.save();target.setTransform(1,0,0,1,0,0);target.clearRect(0,0,w,h);
- const bg=target.createLinearGradient(0,0,w,h);bg.addColorStop(0,"#17171a");bg.addColorStop(.48,"#09090b");bg.addColorStop(1,"#171013");target.fillStyle=bg;target.fillRect(0,0,w,h);
- const glow=target.createRadialGradient(w*.52,h*.46,1,w*.52,h*.46,Math.max(w,h)*.55);glow.addColorStop(0,"rgba(105,28,43,.28)");glow.addColorStop(.55,"rgba(55,22,29,.12)");glow.addColorStop(1,"rgba(0,0,0,0)");target.fillStyle=glow;target.fillRect(0,0,w,h);
- const sweep=(p*1.25-.15)*w;const beam=target.createLinearGradient(sweep-w*.16,0,sweep+w*.16,0);beam.addColorStop(0,"rgba(255,255,255,0)");beam.addColorStop(.5,"rgba(255,255,255,.11)");beam.addColorStop(1,"rgba(255,255,255,0)");target.fillStyle=beam;target.fillRect(0,0,w,h);
- target.save();target.globalAlpha=.4;target.filter="blur("+Math.round(w*.035)+"px)";target.fillStyle="#000";target.beginPath();target.ellipse(w*.5,h*.69,w*.29,h*.025,0,0,Math.PI*2);target.fill();target.restore();
- if(productImage){
-  const iw=productImage.naturalWidth,ih=productImage.naturalHeight;
-  const scale=Math.min(w*.78/iw,h*.48/ih);
-  const zoom=1+.025*Math.sin(p*Math.PI*2);
-  const dw=iw*scale*zoom,dh=ih*scale*zoom;
-  const x=w*.5+Math.sin(p*Math.PI*2)*w*.012,y=h*.46+Math.sin(p*Math.PI*2)*h*.012;
-  target.save();target.translate(x,y);target.rotate(Math.sin(p*Math.PI*2)*.012);
-  target.shadowColor="rgba(0,0,0,.8)";target.shadowBlur=w*.035;target.shadowOffsetY=h*.012;
-  target.drawImage(productImage,-dw/2,-dh/2,dw,dh);target.restore();
- }
- const shade=target.createLinearGradient(0,h*.72,0,h);shade.addColorStop(0,"rgba(0,0,0,0)");shade.addColorStop(1,"rgba(0,0,0,.68)");target.fillStyle=shade;target.fillRect(0,h*.72,w,h*.28);
- target.fillStyle="#df203c";target.fillRect(w*.075,h*.075,w*.13,Math.max(2,h*.003));
- target.textAlign="left";target.fillStyle="rgba(255,255,255,.82)";target.font="600 "+Math.round(w*.021)+"px Arial";target.fillText("RIBAR COLLECTION",w*.075,h*.115);
- target.textAlign="center";target.fillStyle="#fff";target.font="800 "+Math.round(w*.052)+"px Arial";target.fillText("THE DETAILS MATTER",w*.5,h*.86);
- target.fillStyle="rgba(255,255,255,.65)";target.font="500 "+Math.round(w*.018)+"px Arial";target.fillText("PREMIUM SNEAKER EDITION",w*.5,h*.905);
- target.restore();
-}
-function previewLoop(now){
- if(!previewRunning)return;
- const p=((now-previewStarted)/1000%duration)/duration;
- drawFrame(ctx,previewCanvas.width,previewCanvas.height,p);
- rafId=requestAnimationFrame(previewLoop);
-}
-function stopPreview(){previewRunning=false;if(rafId)cancelAnimationFrame(rafId);rafId=0;$("previewButton").textContent="▶ پخش پیش‌نمایش"}
-function startPreview(){
- if(!productImage)return;
- stopPreview();previewRunning=true;previewStarted=performance.now();$("previewButton").textContent="Ⅱ توقف پیش‌نمایش";$("previewState").textContent="در حال پخش";
- previewLoop(previewStarted);
-}
-function resizePreview(){
- const [rw,rh]=aspect();previewCanvas.width=540;previewCanvas.height=Math.round(540*rh/rw);
- $("previewFrame").style.aspectRatio=ratio.replace(":"," / ");
- if(productImage)drawFrame(ctx,previewCanvas.width,previewCanvas.height,0);
-}
-function clearDownload(){if(downloadUrl){URL.revokeObjectURL(downloadUrl);downloadUrl=""}$("downloadLink").hidden=true;$("downloadLink").removeAttribute("href")}
-function loadProduct(selectedFile){
- if(!selectedFile)return;
- if(selectedFile.type!=="image/png"&&!selectedFile.name.toLowerCase().endsWith(".png")){setStatus("فقط فایل PNG پشتیبانی می‌شود.");return}
- stopPreview();clearDownload();
- const nextUrl=URL.createObjectURL(selectedFile),img=new Image();
- img.onload=()=>{
-  if(productUrl)URL.revokeObjectURL(productUrl);
-  productUrl=nextUrl;productImage=img;file=selectedFile;
-  $("fileState").textContent="PNG بارگذاری شد";$("fileName").textContent=selectedFile.name+" · "+Math.round(selectedFile.size/1024)+" KB";$("fileInfo").hidden=false;
-  $("emptyPreview").hidden=true;$("previewButton").disabled=false;$("renderButton").disabled=false;$("previewState").textContent="آماده";
-  resizePreview();startPreview();
-  try{
-   const probe=document.createElement("canvas");probe.width=24;probe.height=24;const pctx=probe.getContext("2d",{willReadFrequently:true});pctx.drawImage(img,0,0,24,24);
-   const data=pctx.getImageData(0,0,24,24).data;let alpha=false;for(let i=3;i<data.length;i+=4){if(data[i]<250){alpha=true;break}}
-   $("alphaNote").textContent=alpha?"پس‌زمینه شفاف شناسایی شد؛ آماده ترکیب روی صحنه.":"این PNG ظاهراً پس‌زمینه شفاف ندارد؛ تصویر بدون حذف پس‌زمینه استفاده می‌شود.";
-  }catch(e){$("alphaNote").textContent="تصویر بارگذاری شد."}
-  setStatus("تصویر آماده است. پیش‌نمایش را بررسی کن.");
- };
- img.onerror=()=>{URL.revokeObjectURL(nextUrl);setStatus("خواندن فایل تصویر ناموفق بود.")};
- img.src=nextUrl;
-}
-function chooseMime(){
- if(!window.MediaRecorder)return "";
- const types=["video/mp4;codecs=avc1.42E01E","video/mp4","video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"];
- if(typeof MediaRecorder.isTypeSupported!=="function")return "";
- return types.find(t=>MediaRecorder.isTypeSupported(t))||"";
-}
-async function renderVideo(){
- if(rendering||!productImage)return;
- if(!HTMLCanvasElement.prototype.captureStream||!window.MediaRecorder){setStatus("این مرورگر ضبط ویدیوی Canvas را پشتیبانی نمی‌کند. Safari را به‌روز کن یا از مرورگر دیگری استفاده کن.");return}
- const mime=chooseMime();
- if(!mime){setStatus("کدک MP4/WebM سازگار در این مرورگر پیدا نشد؛ امکان ساخت فایل ویدیو وجود ندارد.");return}
- rendering=true;$("renderButton").disabled=true;$("previewButton").disabled=true;clearDownload();
- $("progressTrack").hidden=false;$("progressBar").style.width="0%";setStatus("در حال آماده‌سازی رندر…");
- const size=canvasSize(),canvas=document.createElement("canvas");canvas.width=size.w;canvas.height=size.h;
- const renderCtx=canvas.getContext("2d");if(!renderCtx){setStatus("ساخت Canvas خروجی ممکن نشد.");rendering=false;$("renderButton").disabled=false;return}
- const stream=canvas.captureStream(30);let recorder,stopHandler,errorHandler;const chunks=[];
- try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:Math.min(12000000,quality===1080?8000000:4500000)})}
- catch(e){stream.getTracks().forEach(t=>t.stop());rendering=false;$("renderButton").disabled=false;$("previewButton").disabled=false;setStatus("مرورگر نتوانست ضبط‌کننده ویدیو را بسازد: "+e.message);return}
- const stopped=new Promise((resolve,reject)=>{
-  recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
-  stopHandler=()=>resolve();errorHandler=e=>reject(e.error||new Error("Recorder error"));
-  recorder.addEventListener("stop",stopHandler,{once:true});recorder.addEventListener("error",errorHandler,{once:true});
- });
- try{
-  drawFrame(renderCtx,size.w,size.h,0);recorder.start(500);
-  const start=performance.now(),total=duration*1000;let lastUpdate=0;
-  await new Promise((resolve,reject)=>{
-   const tick=now=>{
-    try{
-     const elapsed=Math.min(total,now-start),p=elapsed/total;drawFrame(renderCtx,size.w,size.h,p);
-     if(now-lastUpdate>180){$("progressBar").style.width=Math.round(p*92)+"%";setStatus("در حال رندر… "+Math.round(p*100)+"٪");lastUpdate=now}
-     if(elapsed>=total)resolve();else requestAnimationFrame(tick);
-    }catch(err){reject(err)}
-   };requestAnimationFrame(tick);
-  });
-  recorder.stop();await stopped;
-  const blob=new Blob(chunks,{type:recorder.mimeType||mime});
-  if(!blob.size)throw new Error("فایل خروجی خالی است");
-  downloadUrl=URL.createObjectURL(blob);const ext=(recorder.mimeType||mime).includes("mp4")?"mp4":"webm";
-  const link=$("downloadLink");link.href=downloadUrl;link.download="RIBAR-COLLECTION."+ext;link.textContent="دانلود ویدیو · "+(blob.size/1048576).toFixed(1)+" MB";link.hidden=false;
-  $("progressBar").style.width="100%";setStatus("رندر تمام شد. برای ذخیره، روی لینک دانلود بزن.");$("previewState").textContent="رندر کامل شد";
- }catch(err){console.error("RIBAR render failed",err);try{if(recorder.state!=="inactive")recorder.stop()}catch(_){}setStatus("رندر ناموفق بود: "+(err&&err.message?err.message:"خطای ناشناخته"))}
- finally{stream.getTracks().forEach(t=>t.stop());rendering=false;$("renderButton").disabled=!productImage;$("previewButton").disabled=!productImage}
-}
-uploadButton.addEventListener("click",()=>fileInput.click());
-fileInput.addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)loadProduct(f);fileInput.value=""});
-$("removeFile").addEventListener("click",()=>{
- stopPreview();clearDownload();if(productUrl)URL.revokeObjectURL(productUrl);productUrl="";productImage=null;file=null;
- $("fileInfo").hidden=true;$("fileState").textContent="در انتظار PNG";$("emptyPreview").hidden=false;$("previewButton").disabled=true;$("renderButton").disabled=true;$("previewState").textContent="آماده نیست";ctx.clearRect(0,0,previewCanvas.width,previewCanvas.height);setStatus("برای شروع، تصویر PNG را انتخاب کن.");$("alphaNote").textContent="تصویر اصلی بدون تغییر نگه داشته می‌شود.";
-});
-$("previewButton").addEventListener("click",()=>{if(previewRunning){stopPreview();$("previewState").textContent="متوقف شد"}else startPreview()});
-$("ratio").addEventListener("change",e=>{ratio=e.target.value;resizePreview()});
-$("quality").addEventListener("change",e=>quality=Number(e.target.value)||1080);
-$("duration").addEventListener("input",e=>{duration=Number(e.target.value)||8;$("durationValue").textContent=String(duration);$("previewTime").textContent=duration+" ثانیه"});
-$("renderButton").addEventListener("click",renderVideo);
-$("previewTime").textContent=duration+" ثانیه";
-resizePreview();
-window.addEventListener("pagehide",()=>{stopPreview();if(productUrl)URL.revokeObjectURL(productUrl);if(downloadUrl)URL.revokeObjectURL(downloadUrl)});
+"use strict";(()=>{const $=id=>document.getElementById(id),canvas=$("previewCanvas"),ctx=canvas.getContext("2d");let img=null,imgUrl="",outUrl="",mode="noir",ratio="9:16",quality=1080,duration=8,raf=0,running=false;
+const presets={
+noir:["NOIR SIGNATURE","فضای لوکس مشکی با نورپردازی کنترل‌شده.",["#242126","#080809","#1a1014"],"#d8203d","THE DETAILS MATTER","float"],
+chrome:["CHROME MOTION","فضای فلزی و سرد با نورهای نقره‌ای.",["#58616a","#15191e","#080a0d"],"#d7e0e7","BUILT TO STAND OUT","orbit"],
+redline:["REDLINE IMPACT","پس‌زمینه تیره با خطوط قرمز و حرکت پرانرژی.",["#390d18","#090809","#21080e"],"#f21d3d","MAKE YOUR MOVE","impact"],
+editorial:["FORM EDITORIAL","چیدمان خلوت و ادیتوریال با حس کمپین فشن.",["#d5cfc5","#90877d","#292623"],"#24211e","FORM. FUNCTION. ATTITUDE.","editorial"],
+concrete:["CONCRETE LAB","فضای صنعتی و استریت با نور جانبی.",["#62615e","#292929","#101010"],"#e6e2d9","ENGINEERED FOR THE STREETS","drift"],
+orbit:["ORBIT CAMPAIGN","هاله‌های نوری و حرکت مداری برای نمایش محصول.",["#24203d","#080812","#121027"],"#b7a9ff","IN A CLASS OF ITS OWN","orbit"]};
+function status(t){$("renderStatus").textContent=t}
+function draw(c,w,h,p){const a=presets[mode],light=mode==="editorial";c.save();c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,w,h);let g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,a[2][0]);g.addColorStop(.55,a[2][1]);g.addColorStop(1,a[2][2]);c.fillStyle=g;c.fillRect(0,0,w,h);let glow=c.createRadialGradient(w*.5,h*.46,1,w*.5,h*.46,Math.max(w,h)*.58);glow.addColorStop(0,a[2][0]+"88");glow.addColorStop(1,"transparent");c.fillStyle=glow;c.fillRect(0,0,w,h);
+if(mode==="orbit"||mode==="chrome"){c.strokeStyle=a[3]+"77";c.lineWidth=Math.max(2,w*.003);c.beginPath();c.ellipse(w*.5,h*.46,w*.34,h*.17,-.12,0,Math.PI*2);c.stroke()}
+if(mode==="concrete"||light){c.globalAlpha=.09;c.strokeStyle=light?"#fff":"#ccc";for(let i=0;i<15;i++){c.beginPath();c.moveTo(i*w/8,0);c.lineTo((i-4)*w/8,h);c.stroke()}c.globalAlpha=1}
+let sweep=(p*1.3-.15)*w,b=c.createLinearGradient(sweep-w*.2,0,sweep+w*.2,0);b.addColorStop(0,"transparent");b.addColorStop(.5,"#ffffff22");b.addColorStop(1,"transparent");c.fillStyle=b;c.fillRect(0,0,w,h);
+c.save();c.globalAlpha=.4;c.filter="blur("+w*.035+"px)";c.fillStyle="#000";c.beginPath();c.ellipse(w*.5,h*.69,w*.29,h*.03,0,0,Math.PI*2);c.fill();c.restore();
+if(img){let s=Math.min(w*.79/img.naturalWidth,h*.47/img.naturalHeight),pulse=Math.sin(p*Math.PI*2),z=1+.035*pulse,x=w*.5,y=h*.46,r=0;if(a[5]==="orbit"){x+=Math.sin(p*6.28)*w*.03;r=pulse*.03}else if(a[5]==="impact"){x+=Math.sin(p*12.56)*w*.012;y-=Math.abs(pulse)*h*.01;r=Math.sin(p*12.56)*.02}else if(a[5]==="drift"){x+=pulse*w*.02;y+=Math.cos(p*6.28)*h*.01}else if(a[5]==="editorial"){r=-.012}c.save();c.translate(x,y);c.rotate(r);c.shadowColor="#000b";c.shadowBlur=w*.035;c.shadowOffsetY=h*.012;c.drawImage(img,-img.naturalWidth*s*z/2,-img.naturalHeight*s*z/2,img.naturalWidth*s*z,img.naturalHeight*s*z);c.restore()}
+let sh=c.createLinearGradient(0,h*.72,0,h);sh.addColorStop(0,"transparent");sh.addColorStop(1,light?"#0005":"#000b");c.fillStyle=sh;c.fillRect(0,h*.72,w,h*.28);c.fillStyle=a[3];c.fillRect(w*.075,h*.075,w*.14,Math.max(2,h*.003));c.textAlign="left";c.fillStyle=light?"#171411":"#ffffffdd";c.font="700 "+w*.021+"px Arial";c.fillText("RIBAR COLLECTION",w*.075,h*.115);c.textAlign="center";c.fillStyle=light?"#171411":"#fff";c.font="800 "+w*.045+"px Arial";c.fillText(a[4],w*.5,h*.86);c.font="500 "+w*.018+"px Arial";c.fillText("PREMIUM SNEAKER EDITION",w*.5,h*.905);c.restore()}
+function stop(){running=false;cancelAnimationFrame(raf);$("previewButton").textContent="▶ پخش پیش‌نمایش"}
+function play(){if(!img)return;stop();running=true;let start=performance.now();$("previewButton").textContent="Ⅱ توقف پیش‌نمایش";const loop=n=>{if(!running)return;draw(ctx,canvas.width,canvas.height,((n-start)/1000%duration)/duration);raf=requestAnimationFrame(loop)};loop(start)}
+function selectMode(k){if(!presets[k])return;mode=k;document.querySelectorAll(".mode-card").forEach(el=>{let on=el.dataset.mode===k;el.classList.toggle("active",on);el.setAttribute("aria-pressed",String(on))});$("previewState").textContent=presets[k][0];$("modeDescription").textContent=presets[k][1];if(img){if(running)play();else draw(ctx,canvas.width,canvas.height,0)}}
+function resize(){let [rw,rh]=ratio.split(":").map(Number);canvas.width=540;canvas.height=540*rh/rw;$("previewFrame").style.aspectRatio=ratio.replace(":"," / ");if(img)draw(ctx,canvas.width,canvas.height,0)}
+$("uploadButton").onclick=()=>$("fileInput").click();$("fileInput").onchange=e=>{let f=e.target.files[0];if(!f)return;if(f.type!=="image/png"&&!f.name.toLowerCase().endsWith(".png")){status("فقط PNG پشتیبانی می‌شود.");return}let u=URL.createObjectURL(f),im=new Image();im.onload=()=>{if(imgUrl)URL.revokeObjectURL(imgUrl);imgUrl=u;img=im;$("fileState").textContent="PNG بارگذاری شد";$("fileName").textContent=f.name;$("fileInfo").hidden=false;$("emptyPreview").hidden=true;$("previewButton").disabled=false;$("renderButton").disabled=false;resize();play();try{let q=document.createElement("canvas");q.width=q.height=16;let x=q.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0,16,16);let d=x.getImageData(0,0,16,16).data,alpha=false;for(let i=3;i<d.length;i+=4)if(d[i]<250){alpha=true;break}$("alphaNote").textContent=alpha?"پس‌زمینه شفاف شناسایی شد.":"PNG شفاف نیست؛ تصویر با همان پس‌زمینه استفاده می‌شود."}catch(_){$("alphaNote").textContent="تصویر بارگذاری شد."}status("تصویر آماده است؛ یکی از شش حالت را انتخاب کن.")};im.onerror=()=>{URL.revokeObjectURL(u);status("خواندن تصویر ناموفق بود.")};im.src=u;$("fileInput").value=""};
+$("removeFile").onclick=()=>{stop();if(imgUrl)URL.revokeObjectURL(imgUrl);imgUrl="";img=null;$("fileInfo").hidden=true;$("emptyPreview").hidden=false;$("previewButton").disabled=true;$("renderButton").disabled=true;$("fileState").textContent="در انتظار PNG";ctx.clearRect(0,0,canvas.width,canvas.height);status("برای شروع PNG را انتخاب کن.")};
+document.querySelectorAll(".mode-card").forEach(b=>b.onclick=()=>selectMode(b.dataset.mode));$("previewButton").onclick=()=>running?(stop(),$("previewState").textContent="متوقف شد"):play();$("ratio").onchange=e=>{ratio=e.target.value;resize()};$("quality").onchange=e=>quality=+e.target.value;$("duration").oninput=e=>{duration=+e.target.value;$("durationValue").textContent=duration;$("previewTime").textContent=duration+" ثانیه"};$("previewTime").textContent="8 ثانیه";selectMode("noir");resize();
+$("openPinterestPin").onclick=()=>{let v=$("pinterestUrl").value.trim();if(!v){window.open("https://www.pinterest.com/search/pins/?q=sneaker%20commercial%20motion%20design","_blank","noopener");return}try{let u=new URL(v);if(!/(^|\\.)pinterest\\.com$/.test(u.hostname)&&u.hostname!=="pin.it")throw 0;window.open(u.href,"_blank","noopener");$("pinStatus").textContent="پین باز شد؛ لینک، فایل ویدیو را خودکار وارد نمی‌کند."}catch(_){$("pinStatus").textContent="آدرس معتبر پینترست وارد کن."}};
+$("renderButton").onclick=async()=>{if(!img)return;if(!HTMLCanvasElement.prototype.captureStream||!window.MediaRecorder){status("این مرورگر ضبط Canvas را پشتیبانی نمی‌کند؛ Safari را به‌روز کن یا Chrome را امتحان کن.");return}let types=["video/mp4;codecs=avc1.42E01E","video/mp4","video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"],mime=types.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t));if(!mime){status("کدک سازگار MP4/WebM در این مرورگر پیدا نشد.");return}let [rw,rh]=ratio.split(":").map(Number),w=quality,h=Math.round(w*rh/rw),c=document.createElement("canvas");c.width=w;c.height=h;let x=c.getContext("2d"),stream=c.captureStream(30),rec,chunks=[];try{rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:7000000});let done=new Promise((resolve,reject)=>{rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);rec.onstop=resolve;rec.onerror=reject});rec.start(500);let start=performance.now();await new Promise(resolve=>{function frame(n){let p=Math.min(1,(n-start)/(duration*1000));draw(x,w,h,p);$("progressBar").style.width=Math.round(p*100)+"%";status("در حال ساخت ویدیو… "+Math.round(p*100)+"٪");p>=1?resolve():requestAnimationFrame(frame)}requestAnimationFrame(frame)});rec.stop();await done;let blob=new Blob(chunks,{type:rec.mimeType||mime});if(!blob.size)throw Error("خروجی خالی است");if(outUrl)URL.revokeObjectURL(outUrl);outUrl=URL.createObjectURL(blob);$("downloadLink").href=outUrl;$("downloadLink").download="RIBAR-"+mode+"."+(mime.includes("mp4")?"mp4":"webm");$("downloadLink").textContent="دانلود ویدیو · "+(blob.size/1048576).toFixed(1)+" MB";$("downloadLink").hidden=false;status("رندر تمام شد؛ فایل آماده ذخیره است.")}catch(err){status("رندر ناموفق: "+(err.message||"خطای ناشناخته"))}finally{stream.getTracks().forEach(t=>t.stop())}};
+window.addEventListener("pagehide",()=>{stop();if(imgUrl)URL.revokeObjectURL(imgUrl);if(outUrl)URL.revokeObjectURL(outUrl)});
 })();
