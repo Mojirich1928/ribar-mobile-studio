@@ -9,7 +9,7 @@
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon.svg">
   <title>RIBAR AI VIDEO STUDIO</title>
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
   <div class="app-shell">
@@ -28,13 +28,27 @@
         <p>یک PNG از کتونی انتخاب کن؛ ویدیوی تبلیغاتی آماده‌ات را تحویل بگیر.</p>
       </section>
 
-      <section class="quick-start project-card">
-        <span class="step">QUICK VIDEO / ONE-CLICK WORKFLOW</span>
-        <h2>از PNG تا ویدیو</h2>
-        <p>عکس محصول را انتخاب کن. صحنه‌ها، حرکت‌ها و ترکیب‌بندی به‌صورت خودکار آماده می‌شوند.</p>
-        <button class="primary-btn full" id="quickChoose">＋ انتخاب PNG کتونی</button>
-        <div class="quick-status" id="quickStatus">منتظر عکس محصول هستیم</div>
-        <button class="advanced-toggle" id="advancedToggle" aria-expanded="false">تنظیمات پیشرفته و سناریوها <span>＋</span></button>
+      <section class="project-card template-library">
+        <div class="section-head"><div><span class="step">01 / READY-MADE FILMS</span><h2>کتابخانه ویدیوهای آماده</h2></div><span class="status">۶ قالب اختصاصی</span></div>
+        <p class="library-intro">یک فیلم تبلیغاتی را انتخاب کن؛ فقط PNG کتونی خودت را جایگزین می‌کنیم.</p>
+        <div class="template-grid" id="templateGrid">
+          <button class="template-card selected" data-template="noir"><span class="template-art art-noir"><i></i><b>R</b><small>NOIR / 01</small></span><strong>NOIR SIGNATURE</strong><small>سینمایی · مشکی و نور موضعی</small><em>انتخاب قالب</em></button>
+          <button class="template-card" data-template="chrome"><span class="template-art art-chrome"><i></i><b>R</b><small>CHROME / 02</small></span><strong>CHROME MOTION</strong><small>فلز براق · حرکت سریع دوربین</small><em>انتخاب قالب</em></button>
+          <button class="template-card" data-template="redline"><span class="template-art art-redline"><i></i><b>R</b><small>REDLINE / 03</small></span><strong>REDLINE IMPACT</strong><small>انرژی بالا · کات‌های ضربه‌ای</small><em>انتخاب قالب</em></button>
+          <button class="template-card" data-template="editorial"><span class="template-art art-editorial"><i></i><b>R</b><small>FORM / 04</small></span><strong>FORM EDITORIAL</strong><small>مینیمال · فضای مد و فشن</small><em>انتخاب قالب</em></button>
+          <button class="template-card" data-template="concrete"><span class="template-art art-concrete"><i></i><b>R</b><small>CONCRETE / 05</small></span><strong>CONCRETE LAB</strong><small>بافت صنعتی · نور استودیویی</small><em>انتخاب قالب</em></button>
+          <button class="template-card" data-template="orbit"><span class="template-art art-orbit"><i></i><b>R</b><small>ORBIT / 06</small></span><strong>ORBIT CAMPAIGN</strong><small>حرکت مداری · نمایش محصول</small><em>انتخاب قالب</em></button>
+        </div>
+        <a class="pinterest-link" href="https://www.pinterest.com/search/pins/?q=premium%20sneaker%20motion%20design" target="_blank" rel="noopener">الهام و ایده‌های بیشتر در Pinterest ↗</a>
+      </section>
+      <section class="project-card quick-start">
+        <span class="step">02 / YOUR PRODUCT</span><h2>حالا کتونی خودت را وارد کن</h2>
+        <p>فقط PNG با پس‌زمینه شفاف؛ محصول به‌صورت خودکار داخل قالب انتخابی قرار می‌گیرد.</p>
+        <button class="primary-btn full" id="quickChoose">＋ انتخاب PNG کتونی از گالری</button>
+        <input id="mediaInput" type="file" accept="image/png,.png" hidden>
+        <div class="quick-status" id="quickStatus">ابتدا قالب را انتخاب کن، سپس PNG را وارد کن.</div>
+        <div class="media-list" id="mediaList"></div>
+        <button class="advanced-toggle" id="advancedToggle" aria-expanded="false">تنظیمات حرفه‌ای <span>＋</span></button>
       </section>
 
       <section class="project-card">
@@ -47,7 +61,7 @@
           <strong>عکس یا ویدیوی کتونی را اضافه کن</strong>
           <small>انتخاب از گالری گوشی · JPG · PNG · MP4 · MOV</small>
           <button class="primary-btn" id="chooseMedia">انتخاب از گالری</button>
-          <input id="mediaInput" type="file" accept="image/*,video/*" multiple hidden>
+          <input id="mediaInput" type="file" accept="image/png,.png" hidden>
         </div>
         <div class="media-list" id="mediaList"></div>
         <div class="depth-upload">
@@ -134,6 +148,6 @@
     </nav>
   </div>
   <div class="toast" id="toast" role="status"></div>
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>
