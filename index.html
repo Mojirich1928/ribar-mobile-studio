@@ -9,7 +9,7 @@
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon.svg">
   <title>RIBAR AI VIDEO STUDIO</title>
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
   <div class="app-shell">
@@ -41,6 +41,12 @@
           <input id="mediaInput" type="file" accept="image/*,video/*" multiple hidden>
         </div>
         <div class="media-list" id="mediaList"></div>
+        <div class="depth-upload">
+          <div class="depth-copy"><b>لایه عمق محصول</b><small>برای حرکت مستقل کتونی، PNG با پس‌زمینه شفاف اضافه کن.</small></div>
+          <button class="tool-chip" id="chooseCutout">＋ افزودن PNG شفاف</button>
+          <input id="cutoutInput" type="file" accept="image/png,.png" hidden>
+          <span class="status" id="cutoutStatus">اختیاری · هنوز اضافه نشده</span>
+        </div>
       </section>
 
       <section class="project-card">
@@ -117,6 +123,6 @@
     </nav>
   </div>
   <div class="toast" id="toast" role="status"></div>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
