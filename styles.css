@@ -75,3 +75,5 @@
 .template-card:nth-child(6) .template-product{animation-duration:3.8s;transform:rotate(-22deg) scale(1.05)}
 @keyframes templateShoeFloat{from{translate:-3px 5px;rotate:-2deg}to{translate:4px -5px;rotate:2deg}}
 @media(prefers-reduced-motion:reduce){.template-product{animation:none}}
+
+#legacyMediaProject{display:none!important}
