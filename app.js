@@ -7,6 +7,8 @@ const fmt=n=>n<1048576?Math.max(1,Math.round(n/1024))+" KB":(n/1048576).toFixed(
 $("#chooseMedia").onclick=()=>input.click();
 $("#dropZone").onclick=e=>{if(e.target.id==="dropZone"||e.target.closest(".upload-symbol,strong,small"))input.click()};
 input.onchange=e=>addFiles([...e.target.files]);
+$("#quickChoose").onclick=()=>input.click();
+$("#advancedToggle").onclick=()=>{const open=$("#directionPanel").classList.toggle("show");$("#storyPanel").classList.toggle("show",open);$("#timelineCard").classList.toggle("show",open);$("#advancedToggle").setAttribute("aria-expanded",String(open));$("#advancedToggle span").textContent=open?"−":"＋"};
 const cutoutInput=$("#cutoutInput");
 $("#chooseCutout").onclick=()=>cutoutInput.click();
 cutoutInput.onchange=async e=>{
@@ -29,8 +31,30 @@ function addFiles(files){
  valid.forEach(({file,type})=>media.push({file,url:URL.createObjectURL(file),type}));
  renderMedia();selectMedia(media.length-1);
  $("#mediaStatus").textContent=media.length+" فایل اضافه شد";
- toast(valid.length+" فایل اضافه شد.");
  input.value="";
+ if(valid.length===1&&valid[0].type==="image")prepareQuickVideo(media.length-1);
+ else toast(valid.length+" فایل اضافه شد.");
+}
+async function prepareQuickVideo(index){
+ const item=media[index];if(!item||item.type!=="image")return;
+ selectedIndex=index;cutoutImage=null;
+ $("#quickStatus").textContent="در حال آماده‌سازی عکس و سناریوی تبلیغاتی…";
+ const isPng=(item.file.name||"").toLowerCase().endsWith(".png")||item.file.type==="image/png";
+ if(isPng){
+  try{
+   const img=await loadImage(item.url);
+   const probe=document.createElement("canvas");probe.width=64;probe.height=64;
+   const pctx=probe.getContext("2d",{willReadFrequently:true});pctx.drawImage(img,0,0,64,64);
+   const pixels=pctx.getImageData(0,0,64,64).data;let transparent=false;
+   for(let i=3;i<pixels.length;i+=16){if(pixels[i]<245){transparent=true;break}}
+   if(transparent){cutoutImage=img;$("#cutoutStatus").textContent="PNG شفاف به‌صورت خودکار شناسایی شد"}
+   else $("#cutoutStatus").textContent="PNG انتخاب شد؛ پس‌زمینه شفاف تشخیص داده نشد";
+  }catch(error){$("#quickStatus").textContent="خواندن PNG ممکن نشد";return}
+ }
+ buildScenes();
+ $("#quickStatus").textContent="سناریوی آماده شد · "+scenes.length+" صحنه · عکس محصول به همه صحنه‌ها متصل است";
+ $("#previewLabel").textContent="ویدیوی آماده برای پیش‌نمایش";
+ toast("عکس قرار گرفت؛ ویدیوی آماده ساخته شد. پیش‌نمایش یا خروجی را بزن.");
 }
 function renderMedia(){list.innerHTML="";media.forEach((m,i)=>{const row=document.createElement("div");row.className="media-item";const thumb=m.type==="image"?document.createElement("img"):document.createElement("div");if(m.type==="image")thumb.src=m.url;else{thumb.textContent="▶";thumb.style.display="grid";thumb.style.placeItems="center";thumb.style.color="#e21b36"}thumb.className="media-thumb";const info=document.createElement("div");info.className="media-info";const b=document.createElement("b");b.textContent=m.file.name;const sm=document.createElement("small");sm.textContent=(m.type==="image"?"عکس":"ویدیو")+" · "+fmt(m.file.size);info.append(b,sm);const del=document.createElement("button");del.textContent="×";del.setAttribute("aria-label","حذف فایل");del.onclick=e=>{e.stopPropagation();URL.revokeObjectURL(m.url);media.splice(i,1);renderMedia();if(media.length)selectMedia(Math.min(selectedIndex,media.length-1));else resetPreview();$("#mediaStatus").textContent=media.length?media.length+" فایل اضافه شد":"در انتظار فایل"};row.append(thumb,info,del);row.onclick=()=>selectMedia(i);list.append(row)})}
 function selectMedia(i){if(!media[i])return;selectedIndex=i;imagePreviewPlaying=false;$("#playPreview").textContent="▶";preview.innerHTML="";const el=document.createElement(media[i].type==="image"?"img":"video");el.src=media[i].url;if(el.tagName==="VIDEO"){el.controls=true;el.playsInline=true;el.preload="metadata"}preview.append(el);$("#previewLabel").textContent=media[i].file.name}
@@ -101,7 +125,7 @@ function buildScenes(){
   ]
  };
  const chosen=templates[currentStyle]||templates.cinematic;
- scenes=chosen.map((s,i)=>({title:s[0],desc:s[1],duration:s[2],shot:s[3],mediaIndex:Math.min(i,media.length-1)}));
+ scenes=chosen.map((s,i)=>({title:s[0],desc:s[1],duration:s[2],shot:s[3],mediaIndex:selectedIndex}));
  renderScenes();renderStory();toast("سناریوی حرفه‌ای "+chosen.length+" صحنه‌ای ساخته شد.")
 }
 $("#buildStory").onclick=buildScenes;
