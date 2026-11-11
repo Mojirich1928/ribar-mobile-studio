@@ -1,5 +1,5 @@
-const CACHE="ribar-studio-v9";
-const ASSETS=["./","./index.html","./styles.css?v=9","./app.js?v=9","./manifest.webmanifest","./assets/icon.svg"];
+const CACHE="ribar-studio-v10";
+const ASSETS=["./","./index.html","./styles.css?v=10","./app.js?v=10","./manifest.webmanifest","./assets/icon.svg"];
 self.addEventListener("install",event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE);await cache.addAll(ASSETS);await self.skipWaiting()})()));
 self.addEventListener("activate",event=>event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)));await self.clients.claim()})()));
 self.addEventListener("fetch",event=>{
