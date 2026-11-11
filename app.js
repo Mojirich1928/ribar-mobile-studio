@@ -7,7 +7,21 @@ const fmt=n=>n<1048576?Math.max(1,Math.round(n/1024))+" KB":(n/1048576).toFixed(
 $("#chooseMedia").onclick=()=>input.click();
 $("#dropZone").onclick=e=>{if(e.target.id==="dropZone"||e.target.closest(".upload-symbol,strong,small"))input.click()};
 input.onchange=e=>addFiles([...e.target.files]);
-function addFiles(files){const valid=files.filter(f=>f.type.startsWith("image/")||f.type.startsWith("video/"));if(!valid.length)return toast("فایل تصویری معتبر انتخاب کن.");valid.forEach(file=>media.push({file,url:URL.createObjectURL(file),type:file.type.startsWith("video/")?"video":"image"}));renderMedia();selectMedia(media.length-1);$("#mediaStatus").textContent=media.length+" فایل اضافه شد";toast(valid.length+" فایل اضافه شد.");input.value=""}
+function detectMediaType(file){
+ const mime=(file.type||"").toLowerCase(),name=(file.name||"").toLowerCase();
+ if(mime.startsWith("image/")||/\\.(jpe?g|png|webp|gif|heic|heif|avif|bmp|tiff?)$/.test(name))return "image";
+ if(mime.startsWith("video/")||/\\.(mp4|mov|m4v|webm|3gp|avi)$/.test(name))return "video";
+ return "";
+}
+function addFiles(files){
+ const valid=files.map(file=>({file,type:detectMediaType(file)})).filter(x=>x.type);
+ if(!valid.length)return toast("فرمت عکس یا ویدیو شناسایی نشد؛ JPG، PNG، HEIC یا MP4 انتخاب کن.");
+ valid.forEach(({file,type})=>media.push({file,url:URL.createObjectURL(file),type}));
+ renderMedia();selectMedia(media.length-1);
+ $("#mediaStatus").textContent=media.length+" فایل اضافه شد";
+ toast(valid.length+" فایل اضافه شد.");
+ input.value="";
+}
 function renderMedia(){list.innerHTML="";media.forEach((m,i)=>{const row=document.createElement("div");row.className="media-item";const thumb=m.type==="image"?document.createElement("img"):document.createElement("div");if(m.type==="image")thumb.src=m.url;else{thumb.textContent="▶";thumb.style.display="grid";thumb.style.placeItems="center";thumb.style.color="#e21b36"}thumb.className="media-thumb";const info=document.createElement("div");info.className="media-info";const b=document.createElement("b");b.textContent=m.file.name;const sm=document.createElement("small");sm.textContent=(m.type==="image"?"عکس":"ویدیو")+" · "+fmt(m.file.size);info.append(b,sm);const del=document.createElement("button");del.textContent="×";del.setAttribute("aria-label","حذف فایل");del.onclick=e=>{e.stopPropagation();URL.revokeObjectURL(m.url);media.splice(i,1);renderMedia();if(media.length)selectMedia(Math.min(selectedIndex,media.length-1));else resetPreview();$("#mediaStatus").textContent=media.length?media.length+" فایل اضافه شد":"در انتظار فایل"};row.append(thumb,info,del);row.onclick=()=>selectMedia(i);list.append(row)})}
 function selectMedia(i){if(!media[i])return;selectedIndex=i;imagePreviewPlaying=false;$("#playPreview").textContent="▶";preview.innerHTML="";const el=document.createElement(media[i].type==="image"?"img":"video");el.src=media[i].url;if(el.tagName==="VIDEO"){el.controls=true;el.playsInline=true;el.preload="metadata"}preview.append(el);$("#previewLabel").textContent=media[i].file.name}
 function resetPreview(){preview.innerHTML='<div class="preview-placeholder"><div class="preview-r">R</div><b>RIBAR</b><small>YOUR PRODUCT FILM STARTS HERE</small></div>'}
@@ -60,6 +74,16 @@ function buildScenes(){
  scenes=base.map((s,i)=>({...s,mediaIndex:Math.min(i,media.length-1)}));
  renderScenes();renderStory();toast("سناریوی چندبخشی ساخته شد؛ هر صحنه حرکت متفاوت دارد.")
 }
+$("#buildStory").onclick=buildScenes;
+$("#resetScenes").onclick=()=>{if(!media.length)return toast("اول عکس یا ویدیو اضافه کن.");buildScenes()};
+$("#addScene").onclick=()=>{
+ if(!media.length)return toast("اول عکس یا ویدیو اضافه کن.");
+ const n=scenes.length;
+ const shots=["hero","detail","slide","outro"];
+ const shot=shots[n%shots.length];
+ scenes.push({title:"صحنه جدید",desc:"صحنه قابل ویرایش",duration:2,shot,mediaIndex:Math.min(selectedIndex,media.length-1)});
+ renderScenes();renderStory();toast("صحنه جدید اضافه شد.");
+};
 function renderStory(){
  const el=$("#storyList");el.innerHTML="";
  scenes.forEach((s,i)=>{
