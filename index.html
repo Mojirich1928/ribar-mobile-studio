@@ -1,153 +1,70 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#090909">
-  <meta name="description" content="RIBAR AI VIDEO STUDIO - Mobile sneaker video studio">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="assets/icon.svg">
-  <title>RIBAR AI VIDEO STUDIO</title>
-  <link rel="stylesheet" href="styles.css?v=18">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090909">
+<meta name="description" content="RIBAR Video Studio">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<title>RIBAR VIDEO STUDIO</title>
+<link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">R</div>
-        <div><div class="brand-name">RIBAR <span>STUDIO</span></div><div class="brand-sub">AI VIDEO WORKSPACE</div></div>
-      </div>
-      <button class="icon-btn" id="installBtn" aria-label="نصب اپ" title="نصب اپ">↓</button>
-    </header>
-
-    <main>
-      <section class="welcome">
-        <div class="eyebrow"><i></i> MOBILE CREATIVE SUITE</div>
-        <h1>استودیوی ویدیویی<br><span>ریبار</span></h1>
-        <p>یک PNG از کتونی انتخاب کن؛ ویدیوی تبلیغاتی آماده‌ات را تحویل بگیر.</p>
-      </section>
-
-      <section class="project-card template-library">
-        <div class="section-head"><div><span class="step">01 / READY-MADE FILMS</span><h2>کتابخانه ویدیوهای آماده</h2></div><span class="status">۶ قالب اختصاصی</span></div>
-        <p class="library-intro">یک قالب حرکتی را انتخاب کن؛ سناریوی نمایش محصول با PNG کتونی تو اجرا می‌شود.</p>
-        <div class="template-grid" id="templateGrid">
-          <button class="template-card selected" data-template="noir"><span class="template-art art-noir"><i></i><b>R</b><small>NOIR / 01</small></span><strong>NOIR SIGNATURE</strong><small>سینمایی · مشکی و نور موضعی</small><em>انتخاب قالب</em></button>
-          <button class="template-card" data-template="chrome"><span class="template-art art-chrome"><i></i><b>R</b><small>CHROME / 02</small></span><strong>CHROME MOTION</strong><small>فلز براق · حرکت سریع دوربین</small><em>انتخاب قالب</em></button>
-          <button class="template-card" data-template="redline"><span class="template-art art-redline"><i></i><b>R</b><small>REDLINE / 03</small></span><strong>REDLINE IMPACT</strong><small>انرژی بالا · کات‌های ضربه‌ای</small><em>انتخاب قالب</em></button>
-          <button class="template-card" data-template="editorial"><span class="template-art art-editorial"><i></i><b>R</b><small>FORM / 04</small></span><strong>FORM EDITORIAL</strong><small>مینیمال · فضای مد و فشن</small><em>انتخاب قالب</em></button>
-          <button class="template-card" data-template="concrete"><span class="template-art art-concrete"><i></i><b>R</b><small>CONCRETE / 05</small></span><strong>CONCRETE LAB</strong><small>بافت صنعتی · نور استودیویی</small><em>انتخاب قالب</em></button>
-          <button class="template-card" data-template="orbit"><span class="template-art art-orbit"><i></i><b>R</b><small>ORBIT / 06</small></span><strong>ORBIT CAMPAIGN</strong><small>حرکت مداری · نمایش محصول</small><em>انتخاب قالب</em></button>
-        </div>
-
-      </section>
-      <section class="project-card quick-start">
-        <span class="step">02 / YOUR PRODUCT</span><h2>حالا کتونی خودت را وارد کن</h2>
-        <p>فقط PNG با پس‌زمینه شفاف؛ محصول به‌صورت خودکار داخل قالب انتخابی قرار می‌گیرد.</p>
-        <button class="primary-btn full" id="quickChoose">＋ انتخاب PNG کتونی از گالری</button>
-        <input id="mediaInput" type="file" accept="image/png,.png" hidden>
-        <div class="quick-status" id="quickStatus">ابتدا قالب را انتخاب کن، سپس PNG را وارد کن.</div>
-        <div class="media-list" id="mediaList"></div>
-        <button class="advanced-toggle" id="advancedToggle" aria-expanded="false">تنظیمات حرفه‌ای <span>＋</span></button>
-      </section>
-
-      <section class="project-card" id="legacyMediaProject">
-        <div class="section-head">
-          <div><span class="step">01 / MEDIA</span><h2>رسانه پروژه</h2></div>
-          <span class="status" id="mediaStatus">در انتظار فایل</span>
-        </div>
-        <div class="upload-zone" id="dropZone">
-          <div class="upload-symbol">＋</div>
-          <strong>عکس یا ویدیوی کتونی را اضافه کن</strong>
-          <small>انتخاب از گالری گوشی · JPG · PNG · MP4 · MOV</small>
-          <button class="primary-btn" id="chooseMedia">انتخاب از گالری</button>
-          <input id="legacyMediaInput" type="file" accept="image/png,.png" hidden>
-        </div>
-        <div class="media-list" id="legacyMediaList"></div>
-        <div class="depth-upload">
-          <div class="depth-copy"><b>لایه عمق محصول</b><small>برای حرکت مستقل کتونی، PNG با پس‌زمینه شفاف اضافه کن.</small></div>
-          <button class="tool-chip" id="chooseCutout">＋ افزودن PNG شفاف</button>
-          <input id="cutoutInput" type="file" accept="image/png,.png" hidden>
-          <span class="status" id="cutoutStatus">اختیاری · هنوز اضافه نشده</span>
-        </div>
-      </section>
-
-      <section class="project-card advanced-panel" id="directionPanel">
-        <div class="section-head">
-          <div><span class="step">02 / DIRECTION</span><h2>جهت خلاقه</h2></div>
-        </div>
-        <div class="style-grid">
-          <button class="style-option selected" data-style="cinematic"><span class="style-icon">◉</span><b>Luxury Cinema</b><small>سینمایی، عمیق و لوکس</small></button>
-          <button class="style-option" data-style="dynamic"><span class="style-icon">↗</span><b>Street Energy</b><small>ضربه‌ای، سریع و پرتحرک</small></button>
-          <button class="style-option" data-style="editorial"><span class="style-icon">◇</span><b>Fashion Editorial</b><small>ادیتوریال، مینیمال و شیک</small></button>
-          <button class="style-option" data-style="studio"><span class="style-icon">▣</span><b>Product Studio</b><small>نمایش دقیق محصول و جزئیات</small></button>
-        </div>
-        <label class="field-label" for="ratio">نسبت تصویر</label>
-        <div class="segmented" id="ratioGroup">
-          <button class="active" data-ratio="9:16">9:16</button>
-          <button data-ratio="4:5">4:5</button>
-          <button data-ratio="1:1">1:1</button>
-        </div>
-      </section>
-
-      <section class="project-card advanced-panel" id="storyPanel">
-        <div class="section-head">
-          <div><span class="step">03 / STORYBOARD</span><h2>سناریوی ویدیو</h2></div>
-          <button class="text-btn" id="buildStory">ساخت سناریو ↗</button>
-        </div>
-        <div class="story-list" id="storyList">
-          <div class="empty-state">بعد از افزودن رسانه، سناریوی پیشنهادی اینجا ساخته می‌شود.</div>
-        </div>
-      </section>
-
-      <section class="project-card advanced-panel" id="timelineCard">
-        <div class="section-head"><div><span class="step">04 / EDIT TIMELINE</span><h2>تایم‌لاین تدوین</h2></div><span class="status" id="timelineStatus">۰ صحنه</span></div>
-        <div class="timeline-tools"><button class="tool-chip" id="addScene">＋ افزودن صحنه</button><button class="tool-chip" id="resetScenes">بازسازی سناریو</button></div>
-        <div class="timeline-list" id="timelineList"><div class="empty-state">رسانه اضافه کن و سناریو بساز.</div></div>
-        <p class="timeline-hint">رسانه، مدت و ترتیب هر صحنه را تنظیم کن.</p>
-      </section>
-      <section class="project-card">
-        <div class="section-head">
-          <div><span class="step">05 / PREVIEW</span><h2>پیش‌نمایش</h2></div>
-          <span class="status">LIVE PREVIEW</span>
-        </div>
-        <div class="preview-wrap">
-          <div class="preview-screen" id="previewScreen">
-            <div class="preview-placeholder"><div class="preview-r">R</div><b>RIBAR</b><small>YOUR PRODUCT FILM STARTS HERE</small></div>
-          </div>
-          <div class="preview-controls">
-            <button class="round-btn" id="playPreview">▶</button>
-            <span id="previewLabel">پیش‌نمایش رسانه انتخاب‌شده</span>
-            <button class="round-btn" id="clearPreview">×</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="project-card">
-        <div class="section-head">
-          <div><span class="step">06 / EXPORT</span><h2>خروجی</h2></div>
-        </div>
-        <div class="export-row">
-          <div><b>کیفیت خروجی</b><small>برای شروع، خروجی سازگار با موبایل</small></div>
-          <select id="quality"><option value="720">720p</option><option value="1080">1080p</option></select>
-        </div>
-        <button class="primary-btn full" id="exportBtn">رندر و ذخیره ویدیو</button>
-        <div class="export-note" id="exportNote">رندر محلی از صحنه‌ها؛ فرمت خروجی وابسته به پشتیبانی مرورگر است.</div>
-      </section>
-
-      <section class="local-note">
-        <span>●</span><div><b>فضای کاری مستقل</b><small>فایل‌های انتخابی فعلاً در همین مرورگر پردازش می‌شوند و به سایت Rich Shoes متصل نیستند.</small></div>
-      </section>
-    </main>
-
-    <nav class="bottom-nav">
-      <a class="nav-item active" href="#top"><span>⌂</span>استودیو</a>
-      <a class="nav-item" href="#storyList"><span>▤</span>سناریو</a>
-      <a class="nav-item" href="#previewScreen"><span>▷</span>پیش‌نمایش</a>
-      <a class="nav-item" href="#exportBtn"><span>⇧</span>خروجی</a>
-    </nav>
-  </div>
-  <div class="toast" id="toast" role="status"></div>
-  <script src="app.js?v=19"></script>
+<div class="app">
+<header class="topbar">
+ <div class="brand"><span class="mark">R</span><div><b>RIBAR <i>STUDIO</i></b><small>PRODUCT VIDEO WORKSPACE</small></div></div>
+ <span class="live"><i></i> LOCAL STUDIO</span>
+</header>
+<main>
+<section class="intro">
+ <div class="eyebrow">SIMPLE INPUT · CINEMATIC OUTPUT</div>
+ <h1>استودیوی ویدیویی <em>ریبار</em></h1>
+ <p>یک تصویر PNG از کتونی وارد کن، حرکت را پیش‌نمایش بگیر و ویدیو را ذخیره کن.</p>
+</section>
+<section class="panel upload-panel">
+ <div class="section-title"><div><small>01 / PRODUCT</small><h2>تصویر محصول</h2></div><span class="tag" id="fileState">در انتظار PNG</span></div>
+ <input id="fileInput" type="file" accept="image/png,.png" hidden>
+ <button id="uploadButton" class="upload-area" type="button">
+  <span class="upload-icon">＋</span><b>انتخاب PNG کتونی</b><small>از گالری یا Files گوشی · ترجیحاً پس‌زمینه شفاف</small>
+ </button>
+ <div id="fileInfo" class="file-info" hidden><span id="fileName"></span><button id="removeFile" type="button" aria-label="حذف تصویر">×</button></div>
+ <p id="alphaNote" class="hint">تصویر اصلی بدون تغییر نگه داشته می‌شود.</p>
+</section>
+<section class="panel settings-panel">
+ <div class="section-title"><div><small>02 / OUTPUT</small><h2>تنظیم خروجی</h2></div></div>
+ <div class="setting">
+  <label for="ratio">نسبت تصویر</label>
+  <select id="ratio"><option value="9:16">عمودی 9:16 · اینستاگرام ریلز</option><option value="4:5">پست 4:5</option><option value="1:1">مربع 1:1</option></select>
+ </div>
+ <div class="setting">
+  <label for="quality">کیفیت</label>
+  <select id="quality"><option value="720">720p · سبک‌تر برای موبایل</option><option value="1080" selected>1080p · کیفیت بالا</option></select>
+ </div>
+ <div class="setting duration-setting">
+  <label for="duration">مدت ویدیو <b><span id="durationValue">8</span> ثانیه</b></label>
+  <input id="duration" type="range" min="5" max="12" step="1" value="8">
+ </div>
+</section>
+<section class="panel preview-panel">
+ <div class="section-title"><div><small>03 / PREVIEW</small><h2>پیش‌نمایش واقعی</h2></div><span class="tag" id="previewState">آماده نیست</span></div>
+ <div class="preview-frame" id="previewFrame">
+  <canvas id="previewCanvas" width="540" height="960"></canvas>
+  <div class="empty-preview" id="emptyPreview"><span>R</span><b>RIBAR</b><small>ابتدا PNG کتونی را انتخاب کن</small></div>
+ </div>
+ <div class="preview-actions"><button id="previewButton" class="secondary" type="button" disabled>▶ پخش پیش‌نمایش</button><span id="previewTime">—</span></div>
+</section>
+<section class="render-panel">
+ <div class="section-title"><div><small>04 / RENDER</small><h2>ساخت ویدیو</h2></div><span class="tag">MP4 / WebM</span></div>
+ <button id="renderButton" class="primary" type="button" disabled>رندر و ذخیره ویدیو</button>
+ <div class="progress-track" id="progressTrack" hidden><div id="progressBar"></div></div>
+ <p id="renderStatus" class="hint">برای شروع، تصویر PNG را انتخاب کن.</p>
+ <a id="downloadLink" class="download-link" hidden>دانلود ویدیو</a>
+ <p class="footnote">پردازش داخل مرورگر انجام می‌شود. هنگام رندر صفحه را باز نگه دار.</p>
+</section>
+</main>
+<footer>RIBAR BY RICH SHOES <span>·</span> VIDEO STUDIO</footer>
+</div>
+<script src="app.js?v=20" defer></script>
 </body>
 </html>
