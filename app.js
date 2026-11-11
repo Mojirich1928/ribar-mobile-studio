@@ -12,12 +12,35 @@ function renderMedia(){list.innerHTML="";media.forEach((m,i)=>{const row=documen
 function selectMedia(i){if(!media[i])return;selectedIndex=i;imagePreviewPlaying=false;$("#playPreview").textContent="▶";preview.innerHTML="";const el=document.createElement(media[i].type==="image"?"img":"video");el.src=media[i].url;if(el.tagName==="VIDEO"){el.controls=true;el.playsInline=true;el.preload="metadata"}preview.append(el);$("#previewLabel").textContent=media[i].file.name}
 function resetPreview(){preview.innerHTML='<div class="preview-placeholder"><div class="preview-r">R</div><b>RIBAR</b><small>YOUR PRODUCT FILM STARTS HERE</small></div>'}
 $("#clearPreview").onclick=resetPreview;
-let imagePreviewPlaying=false;
+let imagePreviewPlaying=false,previewRunId=0;
+async function playStoryboardPreview(){
+ if(!scenes.length)return toast("اول عکس‌ها را اضافه کن و سناریو بساز.");
+ const run=++previewRunId;
+ preview.innerHTML="";
+ const canvas=document.createElement("canvas");canvas.className="preview-canvas";canvas.width=540;canvas.height=960;preview.append(canvas);
+ const ctx=canvas.getContext("2d");
+ $("#playPreview").textContent="Ⅱ";$("#previewLabel").textContent="پیش‌نمایش سناریوی کامل";
+ try{
+  for(const scene of scenes){
+   if(run!==previewRunId)break;
+   const item=media[scene.mediaIndex]||media[0];
+   const source=item.type==="image"?await loadImage(item.url):await loadVideo(item.url);
+   if(item.type==="video"){source.currentTime=0;await source.play().catch(()=>{})}
+   const frames=Math.max(1,Math.round(scene.duration*24));
+   for(let f=0;f<frames;f++){
+    if(run!==previewRunId)break;
+    if(item.type==="video"&&source.ended){source.currentTime=0;await source.play().catch(()=>{})}
+    drawScene(ctx,source,canvas.width,canvas.height,f/frames,scene);
+    await sleep(1000/24);
+   }
+   if(item.type==="video"){source.pause();source.remove()}
+  }
+ }catch(error){toast("پخش یکی از صحنه‌ها ممکن نشد.")}
+ if(run===previewRunId){$("#playPreview").textContent="▶";$("#previewLabel").textContent="پیش‌نمایش سناریو تمام شد"}
+}
 $("#playPreview").onclick=()=>{
-  const v=$("video",preview),im=$("img",preview);
-  if(v){if(v.paused)v.play().catch(()=>toast("برای پخش ویدیو دوباره روی دکمه بزن."));else v.pause();return}
-  if(im){imagePreviewPlaying=!imagePreviewPlaying;im.classList.toggle("preview-kenburns",imagePreviewPlaying);$("#playPreview").textContent=imagePreviewPlaying?"Ⅱ":"▶";toast(imagePreviewPlaying?"پیش‌نمایش حرکتی عکس فعال شد.":"پیش‌نمایش متوقف شد.");return}
-  toast("اول عکس یا ویدیوی کتونی را اضافه کن.")
+ if($("#previewLabel").textContent==="پیش‌نمایش سناریوی کامل"){previewRunId++;$("#playPreview").textContent="▶";$("#previewLabel").textContent="پیش‌نمایش متوقف شد";return}
+ playStoryboardPreview()
 };
 $$(".style-option").forEach(b=>b.onclick=()=>{$$(".style-option").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");currentStyle=b.dataset.style});
 $$("[data-ratio]").forEach(b=>b.onclick=()=>{$$("[data-ratio]").forEach(x=>x.classList.remove("active"));b.classList.add("active");currentRatio=b.dataset.ratio;preview.style.aspectRatio=currentRatio.replace(":"," / ")});
