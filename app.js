@@ -100,29 +100,57 @@ function selectMedia(i){if(!media[i])return;selectedIndex=i;imagePreviewPlaying=
 function resetPreview(){preview.innerHTML='<div class="preview-placeholder"><div class="preview-r">R</div><b>RIBAR</b><small>YOUR PRODUCT FILM STARTS HERE</small></div>'}
 $("#clearPreview").onclick=resetPreview;
 let imagePreviewPlaying=false,previewRunId=0;
+function drawPreviewFrame(ctx,source,w,h,p,scene){
+ try{drawScene(ctx,source,w,h,p,scene);return}
+ catch(error){
+  console.warn("RIBAR scene effect fallback:",scene.title,error);
+  ctx.save();ctx.fillStyle="#080808";ctx.fillRect(0,0,w,h);
+  const sw=source.videoWidth||source.naturalWidth,sh=source.videoHeight||source.naturalHeight;
+  if(!sw||!sh)throw error;
+  const scale=Math.max(w/sw,h/sh)*1.04,dw=sw*scale,dh=sh*scale;
+  ctx.drawImage(source,(w-dw)/2,(h-dh)/2,dw,dh);
+  if(cutoutImage&&cutoutImage.complete&&cutoutImage.naturalWidth){
+   const iw=cutoutImage.naturalWidth,ih=cutoutImage.naturalHeight,fit=Math.min(w*.82/iw,h*.60/ih);
+   const fw=iw*fit,fh=ih*fit;
+   ctx.shadowColor="#000";ctx.shadowBlur=24;ctx.drawImage(cutoutImage,(w-fw)/2,h*.43-fh/2,fw,fh);
+  }
+  ctx.fillStyle="rgba(0,0,0,.58)";ctx.fillRect(0,h*.84,w,h*.16);
+  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="700 22px Arial";ctx.fillText("RIBAR COLLECTION",w/2,h*.91);
+  ctx.restore();
+ }
+}
 async function playStoryboardPreview(){
  if(!ensureVideoReady())return;
  const run=++previewRunId;
  preview.innerHTML="";
  const canvas=document.createElement("canvas");canvas.className="preview-canvas";canvas.width=540;canvas.height=960;preview.append(canvas);
  const ctx=canvas.getContext("2d");
+ if(!ctx){toast("ساخت پیش‌نمایش در این مرورگر ممکن نشد.");return}
  $("#playPreview").textContent="Ⅱ";$("#previewLabel").textContent="پیش‌نمایش سناریوی کامل";
  try{
-  for(const scene of scenes){
+  for(let si=0;si<scenes.length;si++){
    if(run!==previewRunId)break;
+   const scene=scenes[si];
+   $("#previewLabel").textContent="صحنه "+(si+1)+" از "+scenes.length+" · "+scene.title;
    const item=referenceVideo||media[scene.mediaIndex]||media[0];
-   const source=item.type==="image"?await loadImage(item.url):await loadVideo(item.url);
-   if(item.type==="video"){await startVideoPlayback(source)}
-   const frames=Math.max(1,Math.round(scene.duration*24));
-   for(let f=0;f<frames;f++){
-    if(run!==previewRunId)break;
-    if(item.type==="video"&&source.paused){await startVideoPlayback(source)}
-    drawScene(ctx,source,canvas.width,canvas.height,f/frames,scene);
-    await sleep(1000/24);
-   }
-   if(item.type==="video"){source.pause();source.remove()}
+   if(!item)throw new Error("فایل صحنه انتخاب نشده است");
+   let source=null;
+   try{
+    source=item.type==="image"?await loadImage(item.url):await loadVideo(item.url);
+    if(item.type==="video")await startVideoPlayback(source);
+    const frames=Math.max(1,Math.round(scene.duration*24));
+    for(let f=0;f<frames;f++){
+     if(run!==previewRunId)break;
+     if(item.type==="video"&&source.paused)await startVideoPlayback(source);
+     drawPreviewFrame(ctx,source,canvas.width,canvas.height,f/frames,scene);
+     await sleep(1000/24);
+    }
+   }finally{if(item.type==="video"&&source){source.pause();source.remove()}}
   }
- }catch(error){console.error("RIBAR preview error:",error);toast("خطای پخش: "+(error?.message||"رسانه آماده نیست"))}
+ }catch(error){
+  console.error("RIBAR preview error:",error);
+  toast("صحنه "+($("#previewLabel").textContent||"")+" · "+(error?.message||"خطای نامشخص"));
+ }
  if(run===previewRunId){$("#playPreview").textContent="▶";$("#previewLabel").textContent="پیش‌نمایش سناریو تمام شد"}
 }
 $("#playPreview").onclick=()=>{
