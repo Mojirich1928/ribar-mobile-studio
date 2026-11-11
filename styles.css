@@ -59,8 +59,8 @@
 .art-concrete:before{inset:0;background:repeating-linear-gradient(135deg,transparent 0 13px,#ffffff0b 14px 15px)}
 .art-orbit{background:radial-gradient(ellipse at 50% 48%,#303640,#0b0d12 70%)}
 .art-orbit i{width:155px;height:70px;border:2px solid #e21b36;box-shadow:0 0 20px #e21b3677;transform:rotate(-28deg)}
-.pinterest-link{display:block;text-align:center;text-decoration:none;color:#aaa;border-top:1px solid #292929;margin-top:14px;padding-top:13px;font-size:10px}
-.pinterest-link:hover{color:#ff7182}
+
+
 .quick-start{margin-top:0}
 #mediaProject{display:none!important}
 @media(max-width:360px){.template-grid{gap:7px}.template-art{height:108px}.template-card{padding:6px}}
@@ -78,17 +78,3 @@
 
 #legacyMediaProject{display:none!important}
 
-/* RIBAR reference-video import */
-.pinterest-import{margin-top:14px;padding:13px;border:1px solid #3b252a;border-radius:12px;background:linear-gradient(145deg,#1c1416,#111)}
-.pinterest-import-head b{display:block;font-size:12px;color:#f5f5f5}
-.pinterest-import-head small,.template-video-help{display:block;color:#929292;font-size:9px;line-height:1.9;margin-top:5px}
-.pin-url-row{display:flex;gap:7px;margin-top:10px}
-.pin-url-row input{min-width:0;flex:1;background:#090909;border:1px solid #383838;border-radius:8px;padding:10px;color:#fff;font:inherit;font-size:10px;direction:ltr;text-align:left}
-.pin-url-row button,.template-video-btn,.template-video-remove{border:1px solid #5a2933;background:#28151a;color:#ff9aa7;border-radius:8px;padding:9px 11px;font:inherit;font-size:10px;white-space:nowrap}
-.template-video-row{display:flex;gap:7px;margin-top:9px}
-.template-video-btn{flex:1;background:#e21b36;color:#fff;border-color:#e21b36;font-weight:800}
-.template-video-remove{background:#191919;color:#aaa;border-color:#383838}
-.template-video-status{font-size:9px;color:#ff9aa7;margin-top:9px;line-height:1.8}
-.template-video-preview video{display:block;width:100%;max-height:190px;object-fit:contain;background:#050505;border-radius:8px;margin-top:9px}
-.template-video-help{margin-bottom:0}
-@media(max-width:360px){.pin-url-row{flex-direction:column}.pin-url-row button{width:100%}}
