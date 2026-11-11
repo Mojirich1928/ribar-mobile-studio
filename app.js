@@ -20,10 +20,8 @@ cutoutInput.onchange=async e=>{
  cutoutInput.value="";
 };
 function detectMediaType(file){
- const mime=(file.type||"").toLowerCase(),name=(file.name||"").toLowerCase();
- if(mime.startsWith("image/")||/\\.(jpe?g|png|webp|gif|heic|heif|avif|bmp|tiff?)$/.test(name))return "image";
- if(mime.startsWith("video/")||/\\.(mp4|mov|m4v|webm|3gp|avi)$/.test(name))return "video";
- return "";
+ const name=(file.name||"").toLowerCase();
+ return file.type==="image/png"||name.endsWith(".png")?"image":"";
 }
 function addFiles(files){
  const valid=files.map(file=>({file,type:detectMediaType(file)})).filter(x=>x.type);
