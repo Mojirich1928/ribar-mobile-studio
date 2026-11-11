@@ -7,3 +7,7 @@
 .preview-screen img.preview-kenburns{animation:ribarKenBurns 5s ease-in-out infinite alternate;transform-origin:center center}@keyframes ribarKenBurns{from{transform:scale(1) translate3d(0,0,0)}to{transform:scale(1.12) translate3d(-1.5%,1%,0)}}
 
 .preview-screen canvas.preview-canvas{display:block;width:100%;height:100%;object-fit:contain;background:#050505}
+
+.depth-upload{display:grid;gap:9px;margin-top:12px;padding:12px;background:linear-gradient(135deg,#191416,#121212);border:1px solid #38232a;border-radius:12px}
+.depth-copy b{font-size:11px;display:block}.depth-copy small{font-size:9px;color:#999;line-height:1.8;display:block;margin-top:4px}
+.depth-upload .tool-chip{justify-self:start}.depth-upload .status{justify-self:start}
