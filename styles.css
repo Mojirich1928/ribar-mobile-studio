@@ -11,3 +11,12 @@
 .depth-upload{display:grid;gap:9px;margin-top:12px;padding:12px;background:linear-gradient(135deg,#191416,#121212);border:1px solid #38232a;border-radius:12px}
 .depth-copy b{font-size:11px;display:block}.depth-copy small{font-size:9px;color:#999;line-height:1.8;display:block;margin-top:4px}
 .depth-upload .tool-chip{justify-self:start}.depth-upload .status{justify-self:start}
+
+/* RIBAR Studio v9 creative direction */
+.style-grid{grid-template-columns:1fr 1fr}
+.style-option{min-height:112px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+.style-option:active{transform:scale(.985)}
+.style-option.selected:after{content:"SELECTED";position:absolute;top:9px;left:9px;font-size:7px;letter-spacing:1px;color:#ff8190}
+.style-option b{font-size:11px;letter-spacing:.2px}
+.style-option small{line-height:1.7}
+@media(max-width:360px){.style-grid{grid-template-columns:1fr}.style-option{min-height:82px}}
