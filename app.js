@@ -71,12 +71,14 @@ $$("[data-ratio]").forEach(b=>b.onclick=()=>{$$("[data-ratio]").forEach(x=>x.cla
 function buildScenes(){
  if(!media.length)return toast("اول رسانه اضافه کن.");
  const base=currentStyle==="cinematic"?[
-  {title:"ورود قهرمانانه",desc:"نمای باز با نور و حرکت دوربین",duration:3,shot:"hero"},
-  {title:"نمای نزدیک جزئیات",desc:"حرکت دوربین روی بافت و متریال",duration:2.5,shot:"detail"},
+  {title:"ورود قهرمانانه",desc:"ورود آرام با شناوری و زاویه سینمایی",duration:2.5,shot:"hero"},
+  {title:"چرخش نمایشی محصول",desc:"حرکت قوسی و تغییر زاویه شبه‌سه‌بعدی",duration:3,shot:"orbit"},
+  {title:"نمای نزدیک جزئیات",desc:"حرکت ماکرو روی فرم و متریال",duration:2.5,shot:"detail"},
   {title:"حرکت جانبی محصول",desc:"اسلاید نرم برای نمایش فرم کتونی",duration:2.5,shot:"slide"},
   {title:"فریم نهایی برند",desc:"جمع‌بندی تمیز با امضای ریبار",duration:2,shot:"outro"}
  ]:[
-  {title:"شروع ضربه‌ای",desc:"ورود سریع محصول به قاب",duration:1.5,shot:"impact"},
+  {title:"شروع ضربه‌ای",desc:"فرود سریع و کنترل‌شده محصول",duration:1.5,shot:"impact"},
+  {title:"چرخش پرانرژی",desc:"چرخش مایل و حرکت قوسی دور محصول",duration:2.2,shot:"orbit"},
   {title:"کلوزآپ پویا",desc:"کات نزدیک با حرکت سریع",duration:2,shot:"detail"},
   {title:"اسلاید محصول",desc:"حرکت جانبی و تاکید روی فرم",duration:1.8,shot:"slide"},
   {title:"پایان ریلز",desc:"فریم نهایی برند",duration:1.5,shot:"outro"}
@@ -89,7 +91,7 @@ $("#resetScenes").onclick=()=>{if(!media.length)return toast("اول عکس یا
 $("#addScene").onclick=()=>{
  if(!media.length)return toast("اول عکس یا ویدیو اضافه کن.");
  const n=scenes.length;
- const shots=["hero","detail","slide","outro"];
+ const shots=["hero","orbit","detail","slide","outro"];
  const shot=shots[n%shots.length];
  scenes.push({title:"صحنه جدید",desc:"صحنه قابل ویرایش",duration:2,shot,mediaIndex:Math.min(selectedIndex,media.length-1)});
  renderScenes();renderStory();toast("صحنه جدید اضافه شد.");
@@ -105,7 +107,7 @@ function renderStory(){
   $(".scene-time",row).textContent=s.duration+" ثانیه";el.append(row)
  })
 }
-const SHOT_LABELS={hero:"ورود سینمایی",detail:"کلوزآپ جزئیات",slide:"اسلاید جانبی",impact:"ورود ضربه‌ای",outro:"پایان برند"};
+const SHOT_LABELS={hero:"ورود سینمایی",orbit:"چرخش شبه‌سه‌بعدی",detail:"کلوزآپ جزئیات",slide:"اسلاید جانبی",impact:"ورود ضربه‌ای",outro:"پایان برند"};
 function renderScenes(){
  const el=$("#timelineList");el.innerHTML="";$("#timelineStatus").textContent=scenes.length+" صحنه";
  if(!scenes.length){el.innerHTML='<div class="empty-state">صحنه‌ای وجود ندارد.</div>';return}
@@ -153,11 +155,24 @@ function drawScene(ctx,source,w,h,p,scene={}){
   atmosphere.addColorStop(0,"rgba(7,7,9,.20)");atmosphere.addColorStop(.55,"rgba(8,8,10,.55)");atmosphere.addColorStop(1,"rgba(0,0,0,.88)");
   ctx.fillStyle=atmosphere;ctx.fillRect(0,0,w,h);
   const iw=cutoutImage.naturalWidth,ih=cutoutImage.naturalHeight;
-  const fit=Math.min(w*.82/iw,h*.60/ih),subjectScale=fit*(shot==="detail"?1.12:shot==="impact"?1.04:1);
-  const fw=iw*subjectScale,fh=ih*subjectScale,depthX=(.5-p)*w*(shot==="slide"?.065:.025),depthY=Math.sin(p*Math.PI)*h*.012;
-  const subjectY=h*.43+depthY+(shot==="detail"?h*.025:0);
-  ctx.save();ctx.globalAlpha=.48;ctx.filter="blur(20px)";ctx.fillStyle="#000";ctx.beginPath();ctx.ellipse(w*.5+depthX,h*.77,fw*.34,Math.max(10,fh*.055),-.04,0,Math.PI*2);ctx.fill();ctx.restore();
-  ctx.save();ctx.shadowColor="rgba(0,0,0,.62)";ctx.shadowBlur=34;ctx.shadowOffsetY=18;ctx.drawImage(cutoutImage,(w-fw)/2+depthX,subjectY-fh/2,fw,fh);ctx.restore();
+  const fit=Math.min(w*.82/iw,h*.60/ih);
+  const zoom=shot==="detail"?1.18:shot==="impact"?1.08:shot==="orbit"?1.04:1;
+  const fw=iw*fit*zoom,fh=ih*fit*zoom;
+  const wave=Math.sin(p*Math.PI*2),settle=1-Math.pow(1-p,3);
+  let depthX=(.5-p)*w*.025,depthY=Math.sin(p*Math.PI)*h*.012;
+  let roll=0,yaw=1,verticalBob=0;
+  if(shot==="hero"){roll=(-.055*(1-p))+.018*Math.sin(p*Math.PI*2);yaw=.94+.06*Math.sin(p*Math.PI);depthX+=(.5-p)*w*.035;verticalBob=Math.sin(p*Math.PI*2)*h*.008}
+  if(shot==="orbit"){roll=Math.sin(p*Math.PI*2)*.105;yaw=.78+.22*Math.pow(Math.cos(p*Math.PI*2),2);depthX+=Math.sin(p*Math.PI*2)*w*.075;depthY+=Math.cos(p*Math.PI*2)*h*.018;verticalBob=Math.sin(p*Math.PI*2)*h*.018}
+  if(shot==="detail"){roll=-.025+.05*p;yaw=.98+.035*Math.sin(p*Math.PI);depthX+=(p-.5)*w*.045;depthY-=h*.018}
+  if(shot==="slide"){roll=(p-.5)*.075;yaw=.96+.04*Math.sin(p*Math.PI);depthX+=(.5-p)*w*.105;verticalBob=Math.sin(p*Math.PI)*h*.012}
+  if(shot==="impact"){const bounce=Math.sin(Math.min(1,p*2.8)*Math.PI)*(1-p*.5);roll=-.14*(1-Math.min(1,p*2.2));yaw=.88+.12*Math.min(1,p*2.4);depthY-=bounce*h*.045;depthX+=(p<.5?1-p*2:0)*w*.035}
+  if(shot==="outro"){roll=-.025+Math.sin(p*Math.PI)*.025;yaw=.96+.04*settle;depthY-=Math.sin(p*Math.PI)*h*.008}
+  const subjectX=w*.5+depthX,subjectY=h*.43+depthY+verticalBob+(shot==="detail"?h*.025:0);
+  ctx.save();ctx.globalAlpha=.48;ctx.filter="blur(20px)";ctx.fillStyle="#000";ctx.beginPath();ctx.ellipse(subjectX,h*.77+depthY*.35,fw*.34,Math.max(10,fh*.055),roll*.35,0,Math.PI*2);ctx.fill();ctx.restore();
+  if(shot==="orbit"){
+   ctx.save();ctx.translate(subjectX,subjectY+fh*.08);ctx.rotate(-.12+wave*.08);ctx.strokeStyle="rgba(226,27,54,.52)";ctx.lineWidth=Math.max(1.5,w*.003);ctx.beginPath();ctx.ellipse(0,0,fw*.68,fh*.22,-.08,Math.PI*(.12+p*.9),Math.PI*(1.02+p*.9));ctx.stroke();ctx.strokeStyle="rgba(255,255,255,.24)";ctx.lineWidth=Math.max(1,w*.0015);ctx.beginPath();ctx.ellipse(0,0,fw*.76,fh*.27,-.08,Math.PI*(1.1+p*.9),Math.PI*(1.42+p*.9));ctx.stroke();ctx.restore();
+  }
+  ctx.save();ctx.translate(subjectX,subjectY);ctx.rotate(roll);ctx.scale(yaw,1);ctx.shadowColor="rgba(0,0,0,.68)";ctx.shadowBlur=shot==="impact"?42:34;ctx.shadowOffsetY=shot==="impact"?24:18;ctx.drawImage(cutoutImage,-fw/2,-fh/2,fw,fh);ctx.restore();
  }else{ctx.drawImage(source,(w-dw)/2+moveX,(h-dh)/2+moveY,dw,dh)}
  const shade=ctx.createLinearGradient(0,0,0,h);shade.addColorStop(0,"rgba(0,0,0,.10)");shade.addColorStop(.52,"rgba(0,0,0,0)");shade.addColorStop(1,"rgba(0,0,0,.78)");ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);
  const vignette=ctx.createRadialGradient(w*.5,h*.45,Math.min(w,h)*.2,w*.5,h*.45,Math.max(w,h)*.72);vignette.addColorStop(0,"rgba(0,0,0,0)");vignette.addColorStop(1,"rgba(0,0,0,.42)");ctx.fillStyle=vignette;ctx.fillRect(0,0,w,h);
