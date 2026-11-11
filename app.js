@@ -1,6 +1,6 @@
 
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
-let media=[],selectedIndex=0,currentStyle="noir",currentRatio="9:16",deferredInstall=null,scenes=[],isExporting=false,cutoutImage=null,cutoutUrl="",referenceVideo=null,referenceVideoUrl="";
+let media=[],selectedIndex=0,currentStyle="noir",currentRatio="9:16",deferredInstall=null,scenes=[],isExporting=false,cutoutImage=null,cutoutUrl="";
 const input=$("#mediaInput"),list=$("#mediaList"),preview=$("#previewScreen");
 const toast=msg=>{const el=$("#toast");el.textContent=msg;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),3000)};
 const fmt=n=>n<1048576?Math.max(1,Math.round(n/1024))+" KB":(n/1048576).toFixed(1)+" MB";
@@ -8,42 +8,6 @@ $("#chooseMedia").onclick=()=>input.click();
 $("#dropZone").onclick=e=>{if(e.target.id==="dropZone"||e.target.closest(".upload-symbol,strong,small"))input.click()};
 input.onchange=e=>addFiles([...e.target.files]);
 $("#quickChoose").onclick=()=>input.click();
-const templateVideoInput=$("#templateVideoInput");
-$("#chooseTemplateVideo").onclick=()=>templateVideoInput.click();
-$("#removeTemplateVideo").onclick=()=>{
- if(referenceVideoUrl)URL.revokeObjectURL(referenceVideoUrl);
- referenceVideo=null;referenceVideoUrl="";
- $("#templateVideoStatus").textContent="هنوز ویدیوی مرجع وارد نشده";
- $("#templateVideoPreview").innerHTML="";
- if(media.length)buildScenes();
- toast("ویدیوی مرجع حذف شد.");
-};
-templateVideoInput.onchange=async e=>{
- const file=e.target.files?.[0];if(!file)return;
- const name=(file.name||"").toLowerCase();
- if(!(file.type.startsWith("video/")||name.endsWith(".mp4")||name.endsWith(".mov")||name.endsWith(".m4v"))){toast("فقط فایل ویدیویی MP4 یا MOV انتخاب کن.");templateVideoInput.value="";return}
- const url=URL.createObjectURL(file);
- try{
-  await loadVideo(url);
-  if(referenceVideoUrl)URL.revokeObjectURL(referenceVideoUrl);
-  referenceVideo={file,url,type:"video"};referenceVideoUrl=url;
-  $("#templateVideoStatus").textContent="ویدیوی مرجع آماده است · "+file.name;
-  const holder=$("#templateVideoPreview");holder.innerHTML="";
-  const player=document.createElement("video");player.src=url;player.controls=true;player.playsInline=true;player.muted=true;player.preload="metadata";holder.append(player);
-  if(media.length)buildScenes();
-  toast("ویدیوی مرجع وارد شد؛ PNG کتونی روی آن جای‌گذاری می‌شود.");
- }catch(err){URL.revokeObjectURL(url);toast("این ویدیو در مرورگر قابل خواندن نیست؛ MP4 سازگار انتخاب کن.")}
- templateVideoInput.value="";
-};
-$("#openPinterestPin").onclick=()=>{
- const raw=$("#pinterestUrl").value.trim();
- if(!raw)return toast("ابتدا لینک Pin را وارد کن.");
- try{
-  const url=new URL(raw);
-  if(url.hostname!=="pinterest.com"&&!url.hostname.endsWith(".pinterest.com")&&url.hostname!=="pin.it")return toast("لینک باید از Pinterest یا pin.it باشد.");
-  window.open(url.href,"_blank","noopener,noreferrer");
- }catch(err){toast("لینک Pinterest معتبر نیست.")}
-};
 $("#advancedToggle").onclick=()=>{const open=$("#directionPanel").classList.toggle("show");$("#storyPanel").classList.toggle("show",open);$("#timelineCard").classList.toggle("show",open);$("#advancedToggle").setAttribute("aria-expanded",String(open));$("#advancedToggle span").textContent=open?"−":"＋"};
 const cutoutInput=$("#cutoutInput");
 $("#chooseCutout").onclick=()=>cutoutInput.click();
@@ -99,64 +63,35 @@ function renderMedia(){list.innerHTML="";media.forEach((m,i)=>{const row=documen
 function selectMedia(i){if(!media[i])return;selectedIndex=i;imagePreviewPlaying=false;$("#playPreview").textContent="▶";preview.innerHTML="";const el=document.createElement(media[i].type==="image"?"img":"video");el.src=media[i].url;if(el.tagName==="VIDEO"){el.controls=true;el.playsInline=true;el.preload="metadata"}preview.append(el);$("#previewLabel").textContent=media[i].file.name}
 function resetPreview(){preview.innerHTML='<div class="preview-placeholder"><div class="preview-r">R</div><b>RIBAR</b><small>YOUR PRODUCT FILM STARTS HERE</small></div>'}
 $("#clearPreview").onclick=resetPreview;
-let imagePreviewPlaying=false,previewRunId=0;
+let imagePreviewPlaying=false,previewRunId=0,previewActive=false;
 function drawPreviewFrame(ctx,source,w,h,p,scene){
- try{drawScene(ctx,source,w,h,p,scene);return}
- catch(error){
-  console.warn("RIBAR scene effect fallback:",scene.title,error);
-  ctx.save();ctx.fillStyle="#080808";ctx.fillRect(0,0,w,h);
-  const sw=source.videoWidth||source.naturalWidth,sh=source.videoHeight||source.naturalHeight;
-  if(!sw||!sh)throw error;
-  const scale=Math.max(w/sw,h/sh)*1.04,dw=sw*scale,dh=sh*scale;
-  ctx.drawImage(source,(w-dw)/2,(h-dh)/2,dw,dh);
-  if(cutoutImage&&cutoutImage.complete&&cutoutImage.naturalWidth){
-   const iw=cutoutImage.naturalWidth,ih=cutoutImage.naturalHeight,fit=Math.min(w*.82/iw,h*.60/ih);
-   const fw=iw*fit,fh=ih*fit;
-   ctx.shadowColor="#000";ctx.shadowBlur=24;ctx.drawImage(cutoutImage,(w-fw)/2,h*.43-fh/2,fw,fh);
-  }
-  ctx.fillStyle="rgba(0,0,0,.58)";ctx.fillRect(0,h*.84,w,h*.16);
-  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="700 22px Arial";ctx.fillText("RIBAR COLLECTION",w/2,h*.91);
-  ctx.restore();
+ const sw=source.naturalWidth||source.videoWidth,sh=source.naturalHeight||source.videoHeight;
+ if(!sw||!sh)throw new Error("تصویر PNG هنوز آماده نیست");
+ ctx.save();ctx.globalAlpha=1;ctx.fillStyle="#080808";ctx.fillRect(0,0,w,h);
+ if(cutoutImage&&cutoutImage.complete&&cutoutImage.naturalWidth){
+  const iw=cutoutImage.naturalWidth,ih=cutoutImage.naturalHeight,fit=Math.min(w*.82/iw,h*.58/ih),z=1+.035*Math.sin(p*Math.PI*2),fw=iw*fit*z,fh=ih*fit*z;
+  ctx.translate(w/2+Math.sin(p*Math.PI*2)*w*.018,h*.46+Math.sin(p*Math.PI*2)*h*.012);
+  ctx.rotate((scene.shot==="orbit"||scene.shot==="spin"?.035:.012)*Math.sin(p*Math.PI*2));
+  ctx.shadowColor="rgba(0,0,0,.75)";ctx.shadowBlur=28;ctx.shadowOffsetY=18;ctx.drawImage(cutoutImage,-fw/2,-fh/2,fw,fh);
+ }else{
+  const fit=Math.min(w*.88/sw,h*.68/sh),dw=sw*fit,dh=sh*fit,z=1+.025*Math.sin(p*Math.PI*2);
+  ctx.translate(w/2,h*.46);ctx.scale(z,z);ctx.drawImage(source,-dw/2,-dh/2,dw,dh);
  }
+ ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillRect(0,h*.82,w,h*.18);
+ ctx.fillStyle="#e21b36";ctx.fillRect(w*.08,h*.085,w*.12,4);ctx.fillStyle="#fff";ctx.textAlign="left";ctx.font="600 13px Arial";ctx.fillText("RIBAR COLLECTION",w*.08,h*.12);
+ ctx.textAlign="center";ctx.font="800 25px Arial";ctx.fillText(scene.shot==="outro"?"RIBAR":"THE ICON",w/2,h*.89);
+ ctx.fillStyle="#aaa";ctx.font="11px Arial";ctx.fillText("PREMIUM SNEAKER EDITION",w/2,h*.93);ctx.restore();
 }
 async function playStoryboardPreview(){
- if(!ensureVideoReady())return;
- const run=++previewRunId;
- preview.innerHTML="";
+ if(!ensureVideoReady())return;const run=++previewRunId;previewActive=true;preview.innerHTML="";
  const canvas=document.createElement("canvas");canvas.className="preview-canvas";canvas.width=540;canvas.height=960;preview.append(canvas);
- const ctx=canvas.getContext("2d");
- if(!ctx){toast("ساخت پیش‌نمایش در این مرورگر ممکن نشد.");return}
+ const ctx=canvas.getContext("2d");if(!ctx){previewActive=false;toast("ساخت پیش‌نمایش در این مرورگر ممکن نشد.");return}
  $("#playPreview").textContent="Ⅱ";$("#previewLabel").textContent="پیش‌نمایش سناریوی کامل";
- try{
-  for(let si=0;si<scenes.length;si++){
-   if(run!==previewRunId)break;
-   const scene=scenes[si];
-   $("#previewLabel").textContent="صحنه "+(si+1)+" از "+scenes.length+" · "+scene.title;
-   const item=referenceVideo||media[scene.mediaIndex]||media[0];
-   if(!item)throw new Error("فایل صحنه انتخاب نشده است");
-   let source=null;
-   try{
-    source=item.type==="image"?await loadImage(item.url):await loadVideo(item.url);
-    if(item.type==="video")await startVideoPlayback(source);
-    const frames=Math.max(1,Math.round(scene.duration*24));
-    for(let f=0;f<frames;f++){
-     if(run!==previewRunId)break;
-     if(item.type==="video"&&source.paused)await startVideoPlayback(source);
-     drawPreviewFrame(ctx,source,canvas.width,canvas.height,f/frames,scene);
-     await sleep(1000/24);
-    }
-   }finally{if(item.type==="video"&&source){source.pause();source.remove()}}
-  }
- }catch(error){
-  console.error("RIBAR preview error:",error);
-  toast("صحنه "+($("#previewLabel").textContent||"")+" · "+(error?.message||"خطای نامشخص"));
- }
- if(run===previewRunId){$("#playPreview").textContent="▶";$("#previewLabel").textContent="پیش‌نمایش سناریو تمام شد"}
+ try{for(let si=0;si<scenes.length;si++){if(run!==previewRunId)break;const scene=scenes[si];$("#previewLabel").textContent="صحنه "+(si+1)+" از "+scenes.length+" · "+scene.title;const item=media[scene.mediaIndex]||media[0];if(!item)throw new Error("PNG این صحنه پیدا نشد");const source=await loadImage(item.url),frames=Math.max(1,Math.round(scene.duration*24));for(let f=0;f<frames;f++){if(run!==previewRunId)break;drawPreviewFrame(ctx,source,canvas.width,canvas.height,f/frames,scene);await sleep(1000/24)}}}
+ catch(error){console.error("RIBAR preview error:",error);toast("خطای پیش‌نمایش: "+(error?.message||"خطای نامشخص"))}
+ finally{if(run===previewRunId){previewActive=false;$("#playPreview").textContent="▶";$("#previewLabel").textContent="پیش‌نمایش تمام شد"}}
 }
-$("#playPreview").onclick=()=>{
- if($("#previewLabel").textContent==="پیش‌نمایش سناریوی کامل"){previewRunId++;$("#playPreview").textContent="▶";$("#previewLabel").textContent="پیش‌نمایش متوقف شد";return}
- playStoryboardPreview()
-};
+$("#playPreview").onclick=()=>{if(previewActive){previewRunId++;previewActive=false;$("#playPreview").textContent="▶";$("#previewLabel").textContent="پیش‌نمایش متوقف شد";return}playStoryboardPreview()};
 $(".style-option").forEach(b=>b.onclick=()=>{$(".style-option").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");currentStyle=b.dataset.style});
 $(".template-card").forEach(card=>card.onclick=()=>{
  $(".template-card").forEach(x=>x.classList.remove("selected"));
@@ -310,7 +245,7 @@ function drawScene(ctx,source,w,h,p,scene={}){
  ctx.fillStyle="#e21b36";ctx.fillRect(w*.38,h*.95,w*.24,Math.max(3,h*.005));ctx.restore();
 }
 
-async function exportVideo(){if(isExporting)return;if(!ensureVideoReady())return;if(!HTMLCanvasElement.prototype.captureStream||!window.MediaRecorder)return toast("ضبط ویدیو در این مرورگر پشتیبانی نمی‌شود.");const canvas=document.createElement("canvas"),parts=currentRatio.split(":").map(Number),w=Number($("#quality").value)||1080,h=Math.round(w*parts[1]/parts[0]);canvas.width=w;canvas.height=h;const ctx=canvas.getContext("2d");const mime=["video/mp4;codecs=avc1.42E01E","video/mp4","video/webm;codecs=vp9","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));if(!mime)return toast("کدک ویدیویی سازگار پیدا نشد.");const stream=canvas.captureStream(30);let recorder;try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:5000000})}catch(e){stream.getTracks().forEach(t=>t.stop());return toast("ساخت رندرر در این دستگاه ممکن نشد.")}const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{const blob=new Blob(chunks,{type:mime}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="RIBAR-VIDEO."+(mime.includes("mp4")?"mp4":"webm");document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);isExporting=false;$("#exportBtn").disabled=false;$("#exportBtn").textContent="رندر و ذخیره ویدیو";$("#exportNote").textContent="رندر تمام شد. اگر دانلود خودکار انجام نشد، لینک ویدیو را در مرورگر باز و از Share گزینه Save to Files را انتخاب کن.";toast("رندر ویدیو تمام شد.")};recorder.onerror=()=>{isExporting=false;$("#exportBtn").disabled=false;toast("در ضبط ویدیو خطا رخ داد.")};isExporting=true;$("#exportBtn").disabled=true;$("#exportBtn").textContent="در حال رندر…";$("#exportNote").textContent="صفحه را باز نگه دار؛ رندر روی همین گوشی انجام می‌شود.";recorder.start(250);try{for(const scene of scenes){const item=referenceVideo||media[scene.mediaIndex]||media[0];let source=item.type==="image"?await loadImage(item.url):await loadVideo(item.url);if(item.type==="video"){await startVideoPlayback(source)}const frames=Math.max(1,Math.round(scene.duration*30));for(let f=0;f<frames;f++){if(item.type==="video"&&source.paused){await startVideoPlayback(source)}drawScene(ctx,source,w,h,f/frames,scene);await sleep(1000/30)}if(item.type==="video"){source.pause();source.remove()}}}catch(e){console.error("RIBAR export error:",e);toast("خطای رندر: "+(e?.message||"رسانه قابل خواندن نیست"))}finally{if(recorder.state!=="inactive")recorder.stop();stream.getTracks().forEach(t=>t.stop())}}
+async function exportVideo(){if(isExporting)return;if(!ensureVideoReady())return;if(!HTMLCanvasElement.prototype.captureStream||!window.MediaRecorder)return toast("ضبط ویدیو در این مرورگر پشتیبانی نمی‌شود.");const canvas=document.createElement("canvas"),parts=currentRatio.split(":").map(Number),w=Number($("#quality").value)||1080,h=Math.round(w*parts[1]/parts[0]);canvas.width=w;canvas.height=h;const ctx=canvas.getContext("2d");const mime=["video/mp4;codecs=avc1.42E01E","video/mp4","video/webm;codecs=vp9","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));if(!mime)return toast("کدک ویدیویی سازگار پیدا نشد.");const stream=canvas.captureStream(30);let recorder;try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:5000000})}catch(e){stream.getTracks().forEach(t=>t.stop());return toast("ساخت رندرر در این دستگاه ممکن نشد.")}const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{const blob=new Blob(chunks,{type:mime}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="RIBAR-VIDEO."+(mime.includes("mp4")?"mp4":"webm");document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);isExporting=false;$("#exportBtn").disabled=false;$("#exportBtn").textContent="رندر و ذخیره ویدیو";$("#exportNote").textContent="رندر تمام شد. اگر دانلود خودکار انجام نشد، لینک ویدیو را در مرورگر باز و از Share گزینه Save to Files را انتخاب کن.";toast("رندر ویدیو تمام شد.")};recorder.onerror=()=>{isExporting=false;$("#exportBtn").disabled=false;toast("در ضبط ویدیو خطا رخ داد.")};isExporting=true;$("#exportBtn").disabled=true;$("#exportBtn").textContent="در حال رندر…";$("#exportNote").textContent="صفحه را باز نگه دار؛ رندر روی همین گوشی انجام می‌شود.";recorder.start(250);try{for(const scene of scenes){const item=media[scene.mediaIndex]||media[0];let source=item.type==="image"?await loadImage(item.url):await loadVideo(item.url);const frames=Math.max(1,Math.round(scene.duration*30));for(let f=0;f<frames;f++){drawScene(ctx,source,w,h,f/frames,scene);await sleep(1000/30)}}}catch(e){console.error("RIBAR export error:",e);toast("خطای رندر: "+(e?.message||"رسانه قابل خواندن نیست"))}finally{if(recorder.state!=="inactive")recorder.stop();stream.getTracks().forEach(t=>t.stop())}}
 $("#exportBtn").onclick=exportVideo;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e});
 $("#installBtn").onclick=async()=>{if(deferredInstall){deferredInstall.prompt();deferredInstall=null}else toast("در آیفون: Safari ← Share ← Add to Home Screen")};
