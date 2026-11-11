@@ -64,3 +64,14 @@
 .quick-start{margin-top:0}
 #mediaProject{display:none!important}
 @media(max-width:360px){.template-grid{gap:7px}.template-art{height:108px}.template-card{padding:6px}}
+
+.template-product{position:absolute;z-index:1;width:86%;height:70%;object-fit:contain;filter:drop-shadow(0 12px 12px #000b);transform:rotate(-17deg);animation:templateShoeFloat 3.6s ease-in-out infinite alternate}
+.template-art b{position:absolute;z-index:0;opacity:.22}
+.template-art small{z-index:2}
+.template-card:nth-child(2) .template-product{animation-duration:2.8s;transform:rotate(-12deg) scale(1.04)}
+.template-card:nth-child(3) .template-product{animation-duration:2.2s;transform:rotate(-20deg) scale(1.08)}
+.template-card:nth-child(4) .template-product{animation-duration:4.2s;transform:rotate(-8deg) scale(.94)}
+.template-card:nth-child(5) .template-product{animation-duration:3.2s;transform:rotate(-16deg) scale(1.02)}
+.template-card:nth-child(6) .template-product{animation-duration:3.8s;transform:rotate(-22deg) scale(1.05)}
+@keyframes templateShoeFloat{from{translate:-3px 5px;rotate:-2deg}to{translate:4px -5px;rotate:2deg}}
+@media(prefers-reduced-motion:reduce){.template-product{animation:none}}
